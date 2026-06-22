@@ -4,6 +4,7 @@ import { Mechanism } from "@/components/sections/Mechanism";
 import { Fairness } from "@/components/sections/Fairness";
 import { Dashboard } from "@/components/sections/Dashboard";
 import { Integration } from "@/components/sections/Integration";
+import { FooterCTA } from "@/components/sections/FooterCTA";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
         </div>
         <Integration />
       </main>
+      <FooterCTA />
     </>
   );
 }
