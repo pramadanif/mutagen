@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { HUB_SIGNALS, REGIME_ZONES, REGIME_ZONE_COLORS } from "@/lib/judge-content";
 import { PixelMarquee } from "@/components/ui/PixelMarquee";
+import { MutationTierShowcase } from "@/components/ui/MutationTierShowcase";
 
 const FLOW_STEPS = [
   { id: "hub", label: "Cosmos Hub", sub: "x/staking · x/gov · IBC", color: "#EAE4D5" },
@@ -180,6 +181,12 @@ export function CosmosConnection() {
                 HOW REGIME SCORE SHIFTS YOUR ODDS
               </h3>
               <RegimeSpectrum />
+              <div className="mt-8 pt-6 border-t-4 border-dashed border-black/20">
+                <p className="font-header text-[0.5rem] mb-4 text-center opacity-60">
+                  MUTATION NFT TIERS YOU CAN PULL
+                </p>
+                <MutationTierShowcase size="md" />
+              </div>
             </div>
 
             <Link

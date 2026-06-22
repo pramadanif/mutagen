@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { PITCH, CORE_PILLARS } from "@/lib/judge-content";
 import { PixelMarquee } from "@/components/ui/PixelMarquee";
+import { MutationTierShowcase } from "@/components/ui/MutationTierShowcase";
 
 const MARQUEE_PILLARS = CORE_PILLARS.map((p) => p.label.toUpperCase());
 
@@ -74,19 +74,11 @@ export function PitchOverview() {
                 </p>
               </div>
 
-              <div className="flex justify-center lg:justify-end">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-mutagen-green/20 blur-xl scale-110" />
-                  <div className="relative w-40 h-40 bg-[#6A0DAD] border-4 border-black shadow-[8px_8px_0_#000] p-2 rotate-3 hover:rotate-0 transition-transform duration-300">
-                    <Image
-                      src="/mutagen.png"
-                      alt="Mutation NFT"
-                      width={144}
-                      height={144}
-                      className="[image-rendering:pixelated] object-contain w-full h-auto"
-                    />
-                  </div>
-                </div>
+              <div className="flex flex-col items-center lg:items-end gap-4">
+                <MutationTierShowcase size="lg" />
+                <p className="text-xs font-bold text-center lg:text-right opacity-60 max-w-[280px]">
+                  Pull to mint COMMON, RARE, or LEGENDARY Mutation NFTs
+                </p>
               </div>
             </div>
 

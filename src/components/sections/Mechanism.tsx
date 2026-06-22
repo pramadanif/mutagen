@@ -1,5 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
+import { MUTATION_IMAGES } from '@/lib/assets';
+import { MutationTierShowcase } from '@/components/ui/MutationTierShowcase';
+
+const LOOT_ROWS = [
+  { tier: 'COMMON' as const, label: 'COMMON', bars: '+++++---' },
+  { tier: 'RARE' as const, label: 'RARE', bars: '+++-----' },
+  { tier: 'LEGENDARY' as const, label: 'LEGENDARY', bars: '++------' },
+];
 
 export function Mechanism() {
   return (
@@ -77,23 +85,22 @@ export function Mechanism() {
               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full mr-2 text-sm">3</span>
               <h3 className="font-bold text-xl leading-tight">Loot Table Odds<br/>Rescaled</h3>
             </div>
-            <div className="text-base font-mono space-y-3 bg-[#D1CBB8] p-4 border-2 border-[rgba(0,0,0,0.2)] shadow-inner text-black">
-              <div className="flex justify-between border-b border-dashed border-gray-500 pb-2">
-                <span>COMMON M1</span>
-                <span><span className="text-green-600 font-bold">+++++</span>---</span>
-              </div>
-              <div className="flex justify-between border-b border-dashed border-gray-500 pb-2">
-                <span>RARE M2</span>
-                <span><span className="text-green-600 font-bold">+++</span>-----</span>
-              </div>
-              <div className="flex justify-between border-b border-dashed border-gray-500 pb-2">
-                <span>EPIC M3</span>
-                <span><span className="text-green-600 font-bold">+</span>-------</span>
-              </div>
-              <div className="flex justify-between border-b border-dashed border-gray-500 pb-2">
-                <span>LEGENDARY</span>
-                <span><span className="text-amber-600 font-bold">++</span>------</span>
-              </div>
+            <div className="text-base font-mono space-y-2 bg-[#D1CBB8] p-4 border-2 border-[rgba(0,0,0,0.2)] shadow-inner text-black">
+              {LOOT_ROWS.map((row) => (
+                <div key={row.tier} className="flex items-center gap-2 border-b border-dashed border-gray-500 pb-2">
+                  <div className="w-8 h-8 shrink-0 bg-white border border-black p-0.5">
+                    <Image
+                      src={MUTATION_IMAGES[row.tier]}
+                      alt={row.label}
+                      width={28}
+                      height={28}
+                      className="[image-rendering:pixelated] object-contain w-full h-auto"
+                    />
+                  </div>
+                  <span className="flex-1 text-sm font-bold">{row.label}</span>
+                  <span className="text-green-600 font-bold text-xs">{row.bars}</span>
+                </div>
+              ))}
               <p className="text-[10px] mt-2 opacity-70">Weights shift with Regime Score (CALM → TURBULENT)</p>
             </div>
           </div>
@@ -121,13 +128,11 @@ export function Mechanism() {
 
         {/* Node 4: Mint NFT */}
         <div className="absolute z-10 flex flex-col items-center" style={{ left: '800px', top: '650px', transform: 'translate(-50%, -50%)' }}>
-          <div className="text-center text-lg font-bold w-max mb-6 text-black">
+          <div className="text-center text-lg font-bold w-max mb-4 text-black">
             <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full mr-2 text-sm">4</span>
             Mint Mutation NFT
           </div>
-          <div className="w-32 h-32 bg-[#6A0DAD] border-4 border-black p-1 shadow-[4px_4px_0_#000] relative">
-            <Image src="/mutagen.png" alt="Mutation NFT" width={128} height={128} className="[image-rendering:pixelated] object-contain w-full h-auto" />
-          </div>
+          <MutationTierShowcase size="sm" />
         </div>
 
         {/* Antenna (Scientist) */}
