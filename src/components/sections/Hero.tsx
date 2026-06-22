@@ -70,7 +70,7 @@ export function Hero() {
             <div className="absolute bottom-4 w-max">
                <Link
                  href="/lab"
-                 className="inline-block bg-mutagen-green text-black border-4 border-black uppercase font-header text-[0.7rem] px-6 py-2 shadow-[4px_4px_0px_#000] animate-pulse hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                 className="inline-block bg-mutagen-green text-black border-4 border-black uppercase font-header text-[0.7rem] px-6 py-2 animate-glow-pulse hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
                >
                  INITIATE MUTAGEN EXPOSURE
                </Link>
