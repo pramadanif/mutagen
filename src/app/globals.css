@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-mutagen-bg: #F2F2F2;
+  --color-mutagen-panel: #EAE4D5;
+  --color-mutagen-shadow: #B6B09F;
+  --color-mutagen-black: #000000;
+  --color-mutagen-green: #39FF14;
+  --color-mutagen-red: #FF0000;
+  --color-mutagen-terminal: #1a1a1a;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --font-pixel: var(--font-vt323), monospace;
+  --font-header: var(--font-press-start-2p), cursive;
+
+  --shadow-pixel: 4px 4px 0px 0px #B6B09F;
+  --shadow-pixel-hover: 2px 2px 0px 0px #B6B09F;
+  --shadow-pixel-active: 0px 0px 0px 0px #B6B09F;
+  --shadow-pixel-solid: 6px 6px 0px 0px #000;
+
+  --animate-blob: pulsateBlob 4s infinite ease-in-out;
+  --animate-blink: blink 1s step-end infinite;
+  --animate-fast-blink: fastBlink 0.3s step-end infinite;
+
+  @keyframes pulsateBlob {
+    0% { transform: scale(0.9) rotate(0deg); opacity: 0.8; filter: drop-shadow(0 0 10px #B6B09F); }
+    50% { transform: scale(1.1) rotate(5deg); opacity: 1; filter: drop-shadow(0 0 20px #8a8474); }
+    100% { transform: scale(0.9) rotate(0deg); opacity: 0.8; filter: drop-shadow(0 0 10px #B6B09F); }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes fastBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes flowRight {
+    to { stroke-dashoffset: -40; }
+  }
+
+  @keyframes flowDown {
+    to { stroke-dashoffset: -40; }
   }
 }
 
+:root {
+  --background: #F2F2F2;
+  --foreground: #000000;
+}
+
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: 
+      linear-gradient(rgba(182, 176, 159, 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(182, 176, 159, 0.4) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center top;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  /* Anti-aliasing off for pixel perfect look */
+  -webkit-font-smoothing: none;
+}
+
+/* Core UI Components */
+.pixel-border {
+  border: 4px solid #000000;
+}
+
+.pixel-panel {
+  background-color: #EAE4D5;
+  border: 4px solid #000000;
+  box-shadow: 6px 6px 0px #B6B09F;
+  position: relative;
+}
+
+.pixel-panel::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border: 1px solid rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+.section-header {
+  font-family: var(--font-header);
+  font-size: 1.2rem;
+  background-color: #000;
+  color: #F2F2F2;
+  padding: 8px 16px;
+  display: inline-block;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0px #B6B09F;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+/* Complex Animations */
+.data-line-right { stroke-dasharray: 10; animation: flowRight 1s linear infinite; }
+.data-line-down { stroke-dasharray: 10; animation: flowDown 1s linear infinite; }
+
+.terminal-screen {
+  background-color: #111;
+  color: #39FF14;
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #444;
+  box-shadow: inset 0 0 20px rgba(0,0,0,1);
+}
+.terminal-screen::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 4px, 6px 100%; /* More pronounced scanlines */
+  pointer-events: none;
+}
+
+.crt-text { text-shadow: 0 0 3px #39FF14, 0 0 8px #39FF14; }
+.crt-text-red { color: #FF0000; text-shadow: 0 0 3px #FF0000, 0 0 8px #FF0000; }
+
+/* SVG Pixel Art Styling Helpers */
+.svg-pixel { shape-rendering: crispEdges; }
+
+/* Custom Scrollbar for Logs */
+.custom-scroll::-webkit-scrollbar { width: 12px; }
+.custom-scroll::-webkit-scrollbar-track { background: #000; border-left: 2px solid #555; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #EAE4D5; border: 2px solid #000; }
+
+/* Connection Arrows */
+.arrow-right {
+  width: 0; height: 0;
+  border-top: 10px solid transparent; border-bottom: 10px solid transparent;
+  border-left: 15px solid #000;
+}
+.arrow-down {
+  width: 0; height: 0;
+  border-left: 10px solid transparent; border-right: 10px solid transparent;
+  border-top: 15px solid #000;
 }
