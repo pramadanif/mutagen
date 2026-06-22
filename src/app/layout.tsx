@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { VT323, Press_Start_2P } from "next/font/google";
 import { WalletProvider } from "@/components/providers/WalletProvider";
+import { RelayerSync } from "@/components/providers/RelayerSync";
 import "./globals.css";
 
 const vt323 = VT323({
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body
         className={`${vt323.variable} ${pressStart2P.variable} font-pixel text-2xl flex flex-col items-center antialiased`}
       >
-        <WalletProvider>{children}</WalletProvider>
+        <WalletProvider>
+          <RelayerSync>{children}</RelayerSync>
+        </WalletProvider>
       </body>
     </html>
   );

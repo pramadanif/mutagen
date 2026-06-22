@@ -1,4 +1,5 @@
 import type { BondRecord, Experiment, HubPulseData } from "./types";
+import type { RelayerIntervention } from "./relayer-client";
 
 type Listener = () => void;
 
@@ -14,6 +15,10 @@ let hubPulse: HubPulseData = {
   ibcVolumeDelta: 0.08,
   regimeScore: 42,
 };
+
+let relayerInterventions: RelayerIntervention[] = [];
+let zeroSumIndex = 0.38;
+let relayerOnline = false;
 
 export function subscribe(listener: Listener): () => void {
   listeners.add(listener);
@@ -41,6 +46,29 @@ export function setHubPulse(data: Partial<HubPulseData>) {
   notify();
 }
 
+export function syncFromRelayer(data: {
+  hubPulse: HubPulseData;
+  interventions: RelayerIntervention[];
+  zeroSumIndex: number;
+  online: boolean;
+}) {
+  if (data.online) {
+    hubPulse = data.hubPulse;
+    relayerInterventions = data.interventions;
+    zeroSumIndex = data.zeroSumIndex;
+  }
+  relayerOnline = data.online;
+  notify();
+}
+
+export function getZeroSumIndex(): number {
+  return zeroSumIndex;
+}
+
+export function isRelayerOnline(): boolean {
+  return relayerOnline;
+}
+
 export function addExperiment(exp: Omit<Experiment, "id">): Experiment {
   const full: Experiment = { ...exp, id: ++experimentId };
   experiments = [...experiments, full];
@@ -63,10 +91,22 @@ export function getInterventionLogs(): {
   text: string;
   isError: boolean;
 }[] {
+  if (relayerInterventions.length > 0) {
+    return relayerInterventions.slice(-8).map((log, i) => {
+      const isError = Boolean(log.actionTaken);
+      const action = log.actionTaken
+        ? `Action: ${log.actionTaken}`
+        : "No intervention";
+      return {
+        id: i + 1,
+        text: `[${new Date(log.timestamp).toLocaleTimeString()}] Gini: ${log.giniValue.toFixed(2)} | ${action}`,
+        isError,
+      };
+    });
+  }
+
   return [
     { id: 1, text: "[OK] Index stable at 0.38", isError: false },
-    { id: 2, text: "[CHECK] Pull count: 10 | Gini: 0.52", isError: false },
-    { id: 3, text: "[ACTION] Adjusted fee_rate by +0.005", isError: false },
-    { id: 4, text: "[OK] Index stable at 0.41", isError: false },
+    { id: 2, text: "[WAIT] Start relayer for live auditor log", isError: false },
   ];
 }
