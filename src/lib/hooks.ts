@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   fetchRelayerHealth,
+  fetchRelayerInterventions,
 } from "./relayer-client";
 import {
   mapOnChainExperiment,
@@ -69,10 +70,12 @@ export function useRelayerSync(intervalMs = 15_000): void {
       if (!active) return;
 
       if (health?.hubPulse) {
+        const interventions = await fetchRelayerInterventions();
+        if (!active) return;
         syncFromRelayer({
           hubPulse: health.hubPulse,
-          interventions: [],
-          zeroSumIndex: getZeroSumIndex(),
+          interventions,
+          zeroSumIndex: health.zeroSumIndex,
           online: true,
         });
       } else {

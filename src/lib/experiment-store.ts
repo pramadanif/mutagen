@@ -131,8 +131,17 @@ export function getInterventionLogs(): {
     });
   }
 
+  if (relayerOnline) {
+    return [
+      {
+        id: 1,
+        text: `[OK] Relayer online — Gini ${zeroSumIndex.toFixed(2)}, no interventions yet`,
+        isError: false,
+      },
+    ];
+  }
+
   return [
-    { id: 1, text: "[OK] Index stable at 0.38", isError: false },
-    { id: 2, text: "[WAIT] Start relayer for live auditor log", isError: false },
+    { id: 1, text: "[WAIT] Connect relayer for live auditor log", isError: false },
   ];
 }
