@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useChain } from "@cosmos-kit/react";
 import { PixelButton } from "@/components/ui/PixelButton";
@@ -9,11 +9,17 @@ import { RegimeGauge } from "@/components/lab/RegimeGauge";
 import { LootTableBars } from "@/components/lab/LootTableBars";
 import { HubPulsePanel, RegimeShiftIndicator } from "@/components/lab/HubPulsePanel";
 import { ASSETS, MUTATION_IMAGES, TIER_COLORS } from "@/lib/assets";
-import { getBondHistory, getHubPulse } from "@/lib/experiment-store";
-import { mockBond, mockTriggerExposure, mockResonanceStatus } from "@/lib/mock-contract";
+import { getBondHistory, getHubPulse, setExperiments } from "@/lib/experiment-store";
+import {
+  bondTokens,
+  getSigningClient,
+  queryResonanceBonus,
+  triggerExposure,
+} from "@/lib/contract";
+import { postExperimentToRelayer } from "@/lib/relayer-client";
 import { applyResonanceBonus, computeLootTable, normalizeWeights } from "@/lib/loot-table";
 import { useStoreRefresh, usePrefersReducedMotion } from "@/lib/hooks";
-import type { PullResult } from "@/lib/types";
+import type { PullResult, ResonanceStatus } from "@/lib/types";
 
 type PullPhase = "idle" | "glowing" | "flash" | "reveal";
 
@@ -67,22 +73,41 @@ function ResultCard({
 }
 
 export function LabPage() {
-  const { address, isWalletConnected } = useChain("cosmoshub");
+  const { address, isWalletConnected, getOfflineSigner } = useChain("cosmoshub-testnet");
   useStoreRefresh();
 
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("0.1");
   const [denom, setDenom] = useState<string>("uatom");
   const [phase, setPhase] = useState<PullPhase>("idle");
   const [result, setResult] = useState<PullResult | null>(null);
   const [lastBond, setLastBond] = useState({ amount: 0, denom: "uatom" });
   const [txHash, setTxHash] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resonance, setResonance] = useState<ResonanceStatus>({
+    hubStaker: false,
+    nftHolder: false,
+    labHolder: false,
+  });
   const pullIdRef = useRef(0);
   const reducedMotion = usePrefersReducedMotion();
 
   const hubPulse = getHubPulse();
   const bondHistory = getBondHistory();
-  const resonance = mockResonanceStatus(address);
+
+  useEffect(() => {
+    if (!address) {
+      setResonance({ hubStaker: false, nftHolder: false, labHolder: false });
+      return;
+    }
+    void queryResonanceBonus(address).then((r) =>
+      setResonance({
+        hubStaker: r.hubStaker,
+        nftHolder: r.nftHolder,
+        labHolder: r.labHolder,
+      })
+    );
+  }, [address]);
   const lootTable = normalizeWeights(
     applyResonanceBonus(computeLootTable(hubPulse.regimeScore), resonance)
   );
@@ -118,7 +143,7 @@ export function LabPage() {
     [reducedMotion]
   );
 
-  const handleTrigger = () => {
+  const handleTrigger = async () => {
     setError("");
     if (!isWalletConnected || !address) {
       setError("Connect wallet first.");
@@ -130,20 +155,46 @@ export function LabPage() {
       setError("Enter valid bond amount.");
       return;
     }
+    if (denom !== "uatom") {
+      setError("On-chain demo supports uatom only.");
+      return;
+    }
 
+    setLoading(true);
     try {
-      const bondTx = mockBond(bondAmt, denom);
-      const pullResult = mockTriggerExposure(address, resonance);
-      setTxHash(pullResult.txHash);
-      runPullAnimation(pullResult, bondAmt, denom);
-      void bondTx;
+      const signer = await getOfflineSigner();
+      const client = await getSigningClient(signer);
+      const uatom = Math.floor(bondAmt * 1_000_000).toString();
+
+      await bondTokens(client, address, uatom);
+      const pullResult = await triggerExposure(client, address);
+
+      const full: PullResult = {
+        tier: pullResult.tier,
+        exposureScore: parseFloat((bondAmt * pullResult.payoutMultiplier * 0.1).toFixed(2)),
+        txHash: pullResult.txHash,
+        payoutMultiplier: pullResult.payoutMultiplier,
+      };
+
+      setTxHash(full.txHash);
+      runPullAnimation(full, bondAmt, denom);
+
+      void postExperimentToRelayer({
+        bondAmount: bondAmt,
+        payout: bondAmt * pullResult.payoutMultiplier,
+        tier: pullResult.tier,
+        timestamp: new Date().toISOString(),
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Pull failed.");
+      setError(e instanceof Error ? e.message : "On-chain pull failed.");
       setPhase("idle");
+    } finally {
+      setLoading(false);
     }
   };
 
   const isAnimating = phase !== "idle" && phase !== "reveal";
+  const busy = loading || isAnimating;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8 font-pixel">
@@ -248,13 +299,13 @@ export function LabPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="flex-1 bg-transparent outline-none text-xl font-bold min-w-0"
-                  disabled={isAnimating}
+                  disabled={busy}
                 />
                 <select
                   value={denom}
                   onChange={(e) => setDenom(e.target.value)}
                   className="border-2 border-black bg-[#EAE4D5] px-2 py-1 text-base font-bold"
-                  disabled={isAnimating}
+                  disabled={busy}
                 >
                   {DENOMS.map((d) => (
                     <option key={d} value={d}>
@@ -268,10 +319,10 @@ export function LabPage() {
 
               <PixelButton
                 onClick={handleTrigger}
-                disabled={isAnimating}
+                disabled={busy}
                 className="w-full py-4 text-sm"
               >
-                TRIGGER EXPOSURE
+                {loading ? "SIGNING..." : "TRIGGER EXPOSURE"}
               </PixelButton>
             </div>
 

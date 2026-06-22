@@ -3,20 +3,33 @@
 import { ChainProvider } from "@cosmos-kit/react";
 import type { MainWalletBase } from "@cosmos-kit/core";
 import { wallets } from "@cosmos-kit/keplr-extension";
-import { cosmoshubChain, cosmoshubAssetList } from "@/lib/cosmoshub-chain";
+import {
+  providerTestnetAssetList,
+  providerTestnetChain,
+  PROVIDER_RPC,
+  PROVIDER_REST,
+} from "@/lib/cosmoshub-testnet-chain";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
     <ChainProvider
-      chains={[cosmoshubChain as never]}
-      assetLists={[cosmoshubAssetList as never]}
+      chains={[providerTestnetChain as never]}
+      assetLists={[providerTestnetAssetList as never]}
       wallets={wallets as unknown as MainWalletBase[]}
       throwErrors={false}
       endpointOptions={{
         endpoints: {
           cosmoshub: {
-            rpc: ["https://rpc.cosmos.directory/cosmoshub"],
-            rest: ["https://rest.cosmos.directory/cosmoshub"],
+            rpc: [PROVIDER_RPC],
+            rest: [PROVIDER_REST],
+          },
+          "cosmoshub-testnet": {
+            rpc: [PROVIDER_RPC],
+            rest: [PROVIDER_REST],
+          },
+          provider: {
+            rpc: [PROVIDER_RPC],
+            rest: [PROVIDER_REST],
           },
         },
       }}

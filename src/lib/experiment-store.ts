@@ -29,6 +29,22 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
+export function syncContractData(data: {
+  experiments: Experiment[];
+  zeroSumIndex: number;
+  interventions: RelayerIntervention[];
+}) {
+  experiments = data.experiments;
+  zeroSumIndex = data.zeroSumIndex;
+  relayerInterventions = data.interventions;
+  notify();
+}
+
+export function setExperiments(exps: Experiment[]): void {
+  experiments = exps;
+  notify();
+}
+
 export function getExperiments(): Experiment[] {
   return experiments;
 }

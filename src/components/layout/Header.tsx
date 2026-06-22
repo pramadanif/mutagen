@@ -16,7 +16,8 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const { address, walletRepo, disconnect, isWalletConnected } = useChain("cosmoshub");
+  const { address, walletRepo, disconnect, isWalletConnected, getOfflineSigner } =
+    useChain("cosmoshub-testnet");
   const [showBanner, setShowBanner] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [connectError, setConnectError] = useState("");
