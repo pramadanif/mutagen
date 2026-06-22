@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "./config.js";
+import { corsMiddleware } from "./cors.js";
 import { state, addExperimentRecord } from "./state.js";
 import { runAuditorIfNeeded } from "./ai/auditor.js";
 import { log } from "./logger.js";
@@ -7,13 +8,7 @@ import { log } from "./logger.js";
 export function createServer() {
   const app = express();
   app.use(express.json());
-  app.use((_req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    next();
-  });
-  app.options("*", (_req, res) => res.sendStatus(204));
+  app.use(corsMiddleware);
 
   app.get("/", (_req, res) => {
     res.json({ service: "mutagen-relayer", status: state.status, health: "/health" });
