@@ -42,8 +42,8 @@ export function Dashboard() {
         }
 
         setGaugeLogs(logs => {
-          const newLogs = [...logs, { text: statusMsg, isError, id: Date.now() }];
-          if (newLogs.length > 5) return newLogs.slice(newLogs.length - 5);
+          const newLogs = [...logs, { text: statusMsg, isError, id: Math.random() + Date.now() }];
+          if (newLogs.length > 5) return newLogs.slice(-5);
           return newLogs;
         });
 
@@ -128,7 +128,7 @@ export function Dashboard() {
             </div>
 
             {/* Mini Terminal inside panel */}
-            <div className="w-full h-24 bg-black border-4 border-[#333] p-2 mt-auto">
+            <div className="w-full h-24 bg-black border-4 border-[#333] p-2 mt-auto overflow-hidden">
               <div className="font-mono text-xs leading-tight flex flex-col gap-1 justify-end h-full">
                 {gaugeLogs.map(log => (
                   <div key={log.id} className={log.isError ? "text-[#FF5F56]" : "text-[#27C93F]"}>{log.text}</div>

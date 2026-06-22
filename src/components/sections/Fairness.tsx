@@ -23,10 +23,9 @@ export function Fairness() {
     const interval = setInterval(() => {
       const logLine = auditorLogsData[logIndex % auditorLogsData.length];
       const isError = logLine.includes("WARNING") || logLine.includes("Threshold") || logLine.includes("intervention");
-      
       setLogs(prev => {
-        const newLogs = [...prev, { text: `> ${logLine}`, isError, id: Date.now() }];
-        if (newLogs.length > 10) return newLogs.slice(newLogs.length - 10);
+        const newLogs = [...prev, { text: `> ${logLine}`, isError, id: Math.random() + Date.now() }];
+        if (newLogs.length > 10) return newLogs.slice(-10);
         return newLogs;
       });
       
