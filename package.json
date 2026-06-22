@@ -10,7 +10,9 @@
     "relayer": "npm --prefix relayer run start",
     "relayer:dev": "npm --prefix relayer run dev",
     "relayer:verify": "npm --prefix relayer run verify",
-    "verify:phase2": "npm --prefix relayer run verify"
+    "verify:phase2": "npm --prefix relayer run verify",
+    "deploy:contract": "npx tsx scripts/deploy.ts",
+    "verify:e2e": "npx tsx scripts/e2e-verify.ts"
   },
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.38.1",
