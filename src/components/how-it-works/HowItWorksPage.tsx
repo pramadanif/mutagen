@@ -1,65 +1,264 @@
 import Image from "next/image";
+import Link from "next/link";
+import {
+  PITCH,
+  PLAYER_LOOP,
+  REGIME_ZONES,
+  HUB_SIGNALS,
+  AI_COMPONENTS,
+  FAIRNESS_STORY,
+  RESONANCE_BONUS,
+  ARCHITECTURE_LAYERS,
+  ODIN_PARALLEL,
+  CORE_PILLARS,
+} from "@/lib/judge-content";
+import { InfoPanel, InnerCard } from "@/components/ui/InfoPanel";
 
-const STEPS = [
-  { img: "/pouringlab.png", title: "Bond", desc: "Lock ATOM into the incubator curve." },
-  { img: "/scientist pull lever.png", title: "Trigger", desc: "Pull the lever. Hub regime sets your odds." },
-  { img: "/mutagen.png", title: "Mutate", desc: "Receive a tiered mutation NFT payout." },
-];
+function AiFlowDiagram() {
+  return (
+    <svg viewBox="0 0 600 160" className="w-full h-auto svg-pixel" aria-label="AI component trigger flow">
+      <rect x="20" y="20" width="160" height="50" fill="#EAE4D5" stroke="#000" strokeWidth="3" />
+      <text x="100" y="42" textAnchor="middle" fontSize="10" fontWeight="bold">Hub Oracle Update</text>
+      <text x="100" y="58" textAnchor="middle" fontSize="8">(relayer or block event)</text>
 
-const AI_COMPONENTS = [
-  {
-    title: "Regime Classifier",
-    desc: "Rule-based scorer reads bonded ratio Δ, gov activity Δ, and IBC volume Δ from Cosmos Hub. Outputs 0–100 regime score that rescales loot table weights.",
-  },
-  {
-    title: "Auditor",
-    desc: "Every K pulls, computes Gini coefficient on payouts. If Gini > 0.6, applies exactly one bounded intervention (fee +0.005 or cap −2%).",
-  },
-];
+      <line x1="180" y1="45" x2="220" y2="45" stroke="#000" strokeWidth="2" />
+      <polygon points="220,40 230,45 220,50" fill="#000" />
+
+      <rect x="235" y="15" width="130" height="60" fill="#39FF14" stroke="#000" strokeWidth="3" />
+      <text x="300" y="38" textAnchor="middle" fontSize="10" fontWeight="bold">Regime Classifier</text>
+      <text x="300" y="55" textAnchor="middle" fontSize="8">deterministic · logged</text>
+      <text x="300" y="68" textAnchor="middle" fontSize="8">NOT every block</text>
+
+      <rect x="20" y="100" width="160" height="50" fill="#EAE4D5" stroke="#000" strokeWidth="3" />
+      <text x="100" y="122" textAnchor="middle" fontSize="10" fontWeight="bold">Every K Pulls</text>
+      <text x="100" y="138" textAnchor="middle" fontSize="8">K = 10 on testnet</text>
+
+      <line x1="180" y1="125" x2="220" y2="125" stroke="#000" strokeWidth="2" />
+      <polygon points="220,120 230,125 220,130" fill="#000" />
+
+      <rect x="235" y="95" width="130" height="60" fill="#F59E0B" stroke="#000" strokeWidth="3" />
+      <text x="300" y="118" textAnchor="middle" fontSize="10" fontWeight="bold">Auditor</text>
+      <text x="300" y="135" textAnchor="middle" fontSize="8">Gini check · 1 action max</text>
+      <text x="300" y="148" textAnchor="middle" fontSize="8">hard-capped params</text>
+
+      <line x1="365" y1="45" x2="400" y2="45" stroke="#000" strokeWidth="2" />
+      <rect x="405" y="25" width="170" height="110" fill="#111" stroke="#333" strokeWidth="3" />
+      <text x="490" y="55" textAnchor="middle" fontSize="9" fill="#27C93F">Loot table rescale</text>
+      <text x="490" y="75" textAnchor="middle" fontSize="9" fill="#27C93F">+ intervention log</text>
+      <text x="490" y="100" textAnchor="middle" fontSize="8" fill="#FF5F56">No freeform AI text</text>
+      <text x="490" y="118" textAnchor="middle" fontSize="8" fill="#FF5F56">No agent chains</text>
+    </svg>
+  );
+}
 
 export function HowItWorksPage() {
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8 font-pixel">
-      <div className="mb-8">
+    <div className="w-full max-w-4xl mx-auto px-4 py-8 font-pixel space-y-8">
+      <div>
         <h1 className="font-header text-2xl md:text-3xl">How It Works</h1>
-        <p className="text-lg mt-2">Chain-driven gacha, reshaped by the Hub.</p>
+        <p className="text-lg mt-2 leading-relaxed">{PITCH.headline}</p>
+        <p className="text-base mt-2 opacity-80 leading-relaxed">{PITCH.subline}</p>
       </div>
 
-      <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] mb-8">
-        <div className="p-4 border-b-4 border-black font-header text-sm">The Cycle</div>
-        <div className="p-6 flex flex-col md:flex-row items-center justify-center gap-6">
-          {STEPS.map((step, i) => (
-            <div key={step.title} className="flex flex-col md:flex-row items-center gap-4">
-              <div className="text-center">
-                <Image
-                  src={step.img}
-                  alt={step.title}
-                  width={120}
-                  height={120}
-                  className="mx-auto [image-rendering:pixelated] object-contain mb-2"
-                />
-                <div className="font-header text-xs mb-1">{step.title}</div>
-                <p className="text-sm max-w-[160px]">{step.desc}</p>
+      {/* Scoring map */}
+      <InfoPanel title="Core Pillars" subtitle="What MUTAGEN delivers end-to-end">
+        <div className="space-y-3">
+          {CORE_PILLARS.map((c, i) => (
+            <div key={c.label} className="flex gap-3 items-start">
+              <span className="font-header text-xs bg-black text-white w-6 h-6 flex items-center justify-center shrink-0">
+                {i + 1}
+              </span>
+              <div>
+                <span className="font-bold">{c.label}:</span>{" "}
+                <span className="text-sm">{c.detail}</span>
               </div>
-              {i < STEPS.length - 1 && (
-                <div className="hidden md:block arrow-right" />
-              )}
             </div>
           ))}
         </div>
-      </div>
+      </InfoPanel>
 
-      <div className="bg-[#F5F2EB] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-        <div className="p-4 border-b-4 border-black font-header text-sm">AI Components</div>
-        <div className="p-6 space-y-6">
-          {AI_COMPONENTS.map((ai) => (
-            <div key={ai.title} className="bg-white border-4 border-black p-4 shadow-[4px_4px_0_#000]">
-              <h3 className="font-header text-xs mb-2 text-mutagen-green">{ai.title}</h3>
-              <p className="text-base">{ai.desc}</p>
+      {/* Player loop */}
+      <InfoPanel title="The Player Loop" subtitle="Bond → Trigger → Mutate">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {PLAYER_LOOP.map((step) => {
+            const imgs = ["/pouringlab.png", "/scientist pull lever.png", "/mutagen.png"];
+            const idx = parseInt(step.step) - 1;
+            return (
+              <div key={step.step} className="text-center">
+                <Image
+                  src={imgs[idx]}
+                  alt={step.title}
+                  width={100}
+                  height={100}
+                  className="mx-auto [image-rendering:pixelated] object-contain mb-3"
+                />
+                <div className="font-header text-xs mb-1">
+                  {step.step}. {step.title}
+                </div>
+                <p className="text-sm leading-snug">{step.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-6 text-center">
+          <Link
+            href="/lab"
+            className="inline-block bg-mutagen-green text-black border-4 border-black px-6 py-3 font-header text-[0.65rem] shadow-[4px_4px_0_#000]"
+          >
+            RUN A PULL IN THE LAB →
+          </Link>
+        </div>
+      </InfoPanel>
+
+      {/* Hub connection */}
+      <InfoPanel title="Cosmos Hub Data Pipeline" subtitle="Why this is Cosmos-native">
+        <p className="text-sm mb-4 leading-relaxed">
+          Post governance Prop 1007, CosmWasm deploys permissionlessly on Cosmos Hub. Staking and
+          governance signals are read via native Stargate queries inside the contract. IBC volume is
+          the only signal requiring an off-chain relayer.
+        </p>
+        <div className="space-y-3 mb-4">
+          {HUB_SIGNALS.map((s) => (
+            <InnerCard key={s.signal} className="!p-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <span className="font-header text-[0.6rem] text-mutagen-green shrink-0 w-36">
+                  {s.signal}
+                </span>
+                <span className="text-xs bg-black text-white px-2 py-0.5 shrink-0">{s.source}</span>
+                <span className="text-sm">{s.role}</span>
+              </div>
+            </InnerCard>
+          ))}
+        </div>
+        <div className="font-header text-xs mb-2">Volatility Regime Zones</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {REGIME_ZONES.map((z) => (
+            <div
+              key={z.label}
+              className="border-2 border-black p-3 text-sm"
+              style={{
+                backgroundColor:
+                  z.label === "CALM" ? "#D0F0C0" : z.label === "ELEVATED" ? "#FFF3CD" : "#FFD0D0",
+              }}
+            >
+              <span className="font-header text-[0.55rem]">{z.label}</span>
+              <span className="font-bold ml-1">({z.range})</span>
+              <p className="mt-1 text-xs leading-snug">{z.effect}</p>
             </div>
           ))}
         </div>
-      </div>
+      </InfoPanel>
+
+      {/* AI */}
+      <InfoPanel title="AI Components" subtitle="Bounded. Deterministic-on-trigger. Auditable.">
+        <InnerCard className="mb-6">
+          <AiFlowDiagram />
+        </InnerCard>
+        <div className="space-y-6">
+          {AI_COMPONENTS.map((ai) => (
+            <div key={ai.title} className="flex flex-col sm:flex-row gap-4">
+              <div className="w-24 h-24 shrink-0 bg-[#CFCAB9] border-4 border-black flex items-center justify-center">
+                <Image
+                  src={ai.icon}
+                  alt={ai.title}
+                  width={80}
+                  height={80}
+                  className="[image-rendering:pixelated] object-contain"
+                />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-header text-xs text-mutagen-green mb-2">{ai.title}</h3>
+                <dl className="text-sm space-y-1">
+                  <div>
+                    <dt className="font-bold inline">Trigger: </dt>
+                    <dd className="inline">{ai.trigger}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold inline">Input: </dt>
+                    <dd className="inline">{ai.input}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold inline">Output: </dt>
+                    <dd className="inline">{ai.output}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold inline">Design: </dt>
+                    <dd className="inline">{ai.design}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs bg-black text-[#27C93F] p-3 border-2 border-[#333] font-mono">
+          Neither component generates freeform text or runs agent chains. Both log structured JSON
+          for the Dashboard — designed as a direct counter to careless AI slop.
+        </p>
+      </InfoPanel>
+
+      {/* Fairness */}
+      <InfoPanel title="Incentive Clarity & Fairness" subtitle="Zero-Sum Index + visible proof">
+        <div className="space-y-4 text-sm leading-relaxed">
+          <p>
+            <span className="font-bold">Problem: </span>
+            {FAIRNESS_STORY.problem}
+          </p>
+          <p>
+            <span className="font-bold">Solution: </span>
+            {FAIRNESS_STORY.solution}
+          </p>
+          <p>
+            <span className="font-bold">On-screen proof: </span>
+            {FAIRNESS_STORY.proof}
+          </p>
+        </div>
+        <Link
+          href="/dashboard"
+          className="inline-block mt-4 text-sm font-bold underline hover:text-mutagen-green"
+        >
+          Open Live Dashboard →
+        </Link>
+      </InfoPanel>
+
+      {/* Resonance */}
+      <InfoPanel title="Resonance Bonus" subtitle="Real wallet checks — not cosmetic badges">
+        <div className="space-y-3">
+          {RESONANCE_BONUS.map((r) => (
+            <InnerCard key={r.label} className="!p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="font-header text-[0.55rem] w-40 shrink-0">{r.label}</span>
+              <span className="text-xs flex-1">{r.check}</span>
+              <span className="text-xs font-bold text-mutagen-green">{r.bonus}</span>
+            </InnerCard>
+          ))}
+        </div>
+      </InfoPanel>
+
+      {/* Architecture */}
+      <InfoPanel title="System Architecture" subtitle="On-chain vs off-chain — honest split">
+        <div className="space-y-3 mb-4">
+          {ARCHITECTURE_LAYERS.map((l) => (
+            <div key={l.layer} className="border-l-4 border-mutagen-green pl-3">
+              <div className="font-header text-[0.55rem]">{l.layer}</div>
+              <p className="text-sm">{l.items}</p>
+            </div>
+          ))}
+        </div>
+        <InnerCard>
+          <p className="text-sm leading-relaxed">{ODIN_PARALLEL}</p>
+        </InnerCard>
+      </InfoPanel>
+
+      {/* Lab notebook */}
+      <InfoPanel title="Lab Notebook" subtitle="Every pull = permanent Experiment entry">
+        <p className="text-sm leading-relaxed mb-4">
+          Each Mutagen Exposure is logged on-chain as Exp #NNNN: bond amount, exposure score,
+          outcome tier, timestamp, and tx hash. Public append-only ledger — literalizing Mad
+          Scientists&apos; &quot;Everything is an experiment.&quot;
+        </p>
+        <Link href="/notebook" className="text-sm font-bold underline hover:text-mutagen-green">
+          View Lab Notebook →
+        </Link>
+      </InfoPanel>
     </div>
   );
 }
