@@ -7,7 +7,7 @@ import { fetchIbcVolumeDelta } from "./hub/ibc-volume.js";
 import { classifyRegime } from "./ai/regime-classifier.js";
 import { computeGini } from "./ai/auditor.js";
 
-const RELAYER_URL = process.env.RELAYER_URL ?? "http://localhost:3001";
+const RELAYER_URL = process.env.RELAYER_URL ?? "http://localhost:3090";
 
 async function verifyHubFetch() {
   const bonded = await fetchBondedRatioDelta();

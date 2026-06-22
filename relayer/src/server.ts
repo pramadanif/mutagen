@@ -8,12 +8,16 @@ export function createServer() {
   const app = express();
   app.use(express.json());
   app.use((_req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     next();
   });
   app.options("*", (_req, res) => res.sendStatus(204));
+
+  app.get("/", (_req, res) => {
+    res.json({ service: "mutagen-relayer", status: state.status, health: "/health" });
+  });
 
   app.get("/health", (_req, res) => {
     res.json({
@@ -72,7 +76,7 @@ export function createServer() {
 
 export function startServer(): void {
   const app = createServer();
-  app.listen(config.port, () => {
-    log("info", "relayer_started", { port: config.port });
+  app.listen(config.port, config.host, () => {
+    log("info", "relayer_started", { host: config.host, port: config.port });
   });
 }

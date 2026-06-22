@@ -1,7 +1,7 @@
 import type { HubPulseData } from "./types";
 
 const RELAYER_URL =
-  process.env.NEXT_PUBLIC_RELAYER_URL ?? "http://localhost:3001";
+  process.env.NEXT_PUBLIC_RELAYER_URL ?? "http://localhost:3090";
 
 export interface RelayerHealth {
   status: string;

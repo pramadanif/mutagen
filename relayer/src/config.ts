@@ -1,7 +1,8 @@
 import "dotenv/config";
 
 export const config = {
-  port: Number(process.env.PORT ?? 3001),
+  host: process.env.HOST ?? "0.0.0.0",
+  port: Number(process.env.PORT ?? 3090),
   rpcUrl: process.env.RPC_URL ?? "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz",
   restUrl: process.env.REST_URL ?? "https://rest.provider-sentry-02.ics-testnet.polypore.xyz",
   intervalMs: Number(process.env.INTERVAL_MS ?? 300_000),
@@ -10,4 +11,6 @@ export const config = {
   auditorK: Number(process.env.AUDITOR_K ?? 10),
   giniThreshold: Number(process.env.GINI_THRESHOLD ?? 0.6),
   giniTarget: Number(process.env.GINI_TARGET ?? 0.4),
+  /** Comma-separated origins for CORS, or * for all */
+  corsOrigin: process.env.CORS_ORIGIN ?? "*",
 };
