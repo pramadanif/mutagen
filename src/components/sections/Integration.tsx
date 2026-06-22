@@ -7,6 +7,7 @@ import { PixelButton } from '@/components/ui/PixelButton';
 export function Integration() {
   const [logs, setLogs] = useState<{ text: React.ReactNode; id: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const idCounter = useRef(2000);
   
   useEffect(() => {
     // Initial logs
@@ -40,7 +41,7 @@ export function Integration() {
       const newLogText = <span>Exp #{expCount}: Bonded [{amt}], Exposure [{exp}], Outcome {outcome}</span>;
       
       setLogs(prev => {
-        const newLogs = [...prev, { id: expCount, text: newLogText }];
+        const newLogs = [...prev, { id: ++idCounter.current, text: newLogText }];
         if (newLogs.length > 30) return newLogs.slice(-30);
         return newLogs;
       });

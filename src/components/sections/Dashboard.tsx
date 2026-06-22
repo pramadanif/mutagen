@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 export function Dashboard() {
@@ -9,6 +9,7 @@ export function Dashboard() {
   const [gaugeLogs, setGaugeLogs] = useState<{ text: string; isError: boolean; id: number }[]>([]);
   const [hubData, setHubData] = useState({ bond: "0.00", prop: 12, ibc: "+0.00" });
   const [wavePath, setWavePath] = useState("M0 25 Q 10 5, 20 25 T 40 25 T 60 25 T 80 25 T 100 25 T 120 25 T 140 25 T 160 25 T 180 25 T 200 25");
+  const idCounter = useRef(0);
 
   // Histogram Animation
   useEffect(() => {
@@ -42,7 +43,7 @@ export function Dashboard() {
         }
 
         setGaugeLogs(logs => {
-          const newLogs = [...logs, { text: statusMsg, isError, id: Math.random() + Date.now() }];
+          const newLogs = [...logs, { text: statusMsg, isError, id: ++idCounter.current }];
           if (newLogs.length > 5) return newLogs.slice(-5);
           return newLogs;
         });

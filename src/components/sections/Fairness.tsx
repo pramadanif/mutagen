@@ -17,6 +17,7 @@ const auditorLogsData = [
 export function Fairness() {
   const [logs, setLogs] = useState<{ text: string; isError: boolean; id: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const idCounter = useRef(0);
   
   useEffect(() => {
     let logIndex = 0;
@@ -24,7 +25,7 @@ export function Fairness() {
       const logLine = auditorLogsData[logIndex % auditorLogsData.length];
       const isError = logLine.includes("WARNING") || logLine.includes("Threshold") || logLine.includes("intervention");
       setLogs(prev => {
-        const newLogs = [...prev, { text: `> ${logLine}`, isError, id: Math.random() + Date.now() }];
+        const newLogs = [...prev, { text: `> ${logLine}`, isError, id: ++idCounter.current }];
         if (newLogs.length > 10) return newLogs.slice(-10);
         return newLogs;
       });
