@@ -1,10 +1,12 @@
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { GasPrice } from "@cosmjs/stargate";
+import { GasPrice, calculateFee } from "@cosmjs/stargate";
 import { config } from "../config.js";
 import { log } from "../logger.js";
 import { toCosmosDecimal } from "../utils.js";
 import type { RegimeInference } from "../state.js";
+
+const GAS_PRICE = GasPrice.fromString("0.025uatom");
 
 export async function submitRegimeUpdate(
   inference: RegimeInference
@@ -24,7 +26,7 @@ export async function submitRegimeUpdate(
   const client = await SigningCosmWasmClient.connectWithSigner(
     config.rpcUrl,
     wallet,
-    { gasPrice: GasPrice.fromString("0.025uatom") as never }
+    { gasPrice: GAS_PRICE }
   );
 
   const msg = {
@@ -36,11 +38,13 @@ export async function submitRegimeUpdate(
     },
   };
 
+  const fee = calculateFee(350_000, GAS_PRICE);
   const result = await client.execute(
     account.address,
     config.contractAddress,
     msg,
-    "auto"
+    fee,
+    "MUTAGEN regime update"
   );
 
   log("info", "contract_submit_success", {
