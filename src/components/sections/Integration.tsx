@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { PixelButton } from '@/components/ui/PixelButton';
+import { ODIN_PARALLEL } from '@/lib/judge-content';
 
 export function Integration() {
   const [logs, setLogs] = useState<{ text: React.ReactNode; id: number }[]>([]);
@@ -95,7 +95,7 @@ export function Integration() {
              {/* Text */}
              <div className="text-black ml-2">
                <h3 className="font-header text-base mb-2">Odin Scan</h3>
-               <p className="text-sm font-bold leading-relaxed mb-3">Odin Scan watches our code.<br/>Our Auditor watches our economy.<br/>Same philosophy.</p>
+               <p className="text-sm font-bold leading-relaxed mb-3">{ODIN_PARALLEL}</p>
                <span className="text-xs font-bold underline cursor-pointer hover:text-blue-600">Learn more about Odin repo.</span>
              </div>
           </div>
@@ -118,8 +118,9 @@ export function Integration() {
              <div className="text-black">
                <h3 className="font-header text-base mb-2">Mad Scientists & $LAB.</h3>
                <p className="text-sm font-bold leading-relaxed">
-                 Resonance Bonus:<br/>
-                 Stake Hub, hold Cosmics/ $LAB<br/>for improved odds.<br/>Use $LAB for bonding utility.
+                 Resonance Bonus (real wallet checks):<br/>
+                 Hub staker · Mad Scientists NFT · $LAB holder<br/>
+                 → improved pull odds when verified on-chain.
                </p>
              </div>
           </div>

@@ -87,6 +87,10 @@ export function Dashboard() {
           <h2 className="font-header text-3xl font-bold">Lab Dashboard</h2>
           <span className="text-xl ml-2 font-bold mb-1">(Visual Proof)</span>
         </div>
+        <p className="text-sm mb-4 leading-relaxed max-w-2xl">
+          Every fairness claim maps to something on screen. Silver bars = Monte Carlo
+          pre-seed (1000+ pulls). Green overlay = your real pulls. Gauge + log = Auditor actions.
+        </p>
         <div className="w-full h-1 bg-black border-t-2 border-black mb-6"></div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -47,10 +47,19 @@ export function Fairness() {
       <div className="w-full">
         
         {/* Header */}
-        <div className="flex items-end mb-2">
-          <h2 className="font-header text-3xl font-bold">AI & FAIRNESS</h2>
-          <span className="text-xl ml-2 font-bold mb-1">(The Sentinels)</span>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-2 gap-2">
+          <div>
+            <h2 className="font-header text-3xl font-bold">AI & FAIRNESS</h2>
+            <span className="text-xl font-bold">(The Sentinels)</span>
+          </div>
+          <span className="text-xs font-bold bg-black text-mutagen-green px-3 py-1 border-2 border-mutagen-green">
+            NO FREEFORM AI · DETERMINISTIC ON TRIGGER
+          </span>
         </div>
+        <p className="text-sm mb-6 leading-relaxed max-w-3xl">
+          Two load-bearing AI components — neither generates text. Regime Classifier reshapes odds
+          from Hub data. Auditor caps payout concentration (Gini) with one bounded action per check.
+        </p>
         <div className="w-full h-1 bg-black border-t-2 border-black mb-6"></div>
         
         {/* Sentinels Grid */}
@@ -72,10 +81,15 @@ export function Fairness() {
             {/* Content */}
             <div className="flex flex-col flex-grow text-black">
               <h3 className="font-bold text-xl leading-tight mb-2">AI-Powered Volatility<br/>Regime Classifier:</h3>
-              <p className="text-base leading-tight mb-4">Ingests Hub State<br/>(Bonded Ratio Δ, Proposals,<br/>IBC Volume Δ),<br/>Outputs Score.</p>
+              <p className="text-base leading-tight mb-2">Ingests 3 Hub signals → outputs Score 0–100.</p>
+              <ul className="text-sm leading-tight mb-4 space-y-1 list-disc pl-4">
+                <li>Bonded ratio Δ (x/staking)</li>
+                <li>Gov activity Δ (x/gov)</li>
+                <li>IBC volume Δ (relayer)</li>
+              </ul>
               
               <div className="flex items-center gap-4">
-                <div className="text-right text-sm font-bold leading-tight">Code risk:<br/>animated being<br/>checked.</div>
+                <div className="text-right text-sm font-bold leading-tight">Rule-based.<br/>Logged JSON.<br/>Auditable.</div>
                 
                 {/* Mini Mac Window */}
                 <div className="w-28 h-20 bg-black border-2 border-black rounded-sm relative shadow-md flex flex-col overflow-hidden">
@@ -118,7 +132,11 @@ export function Fairness() {
             {/* Content */}
             <div className="flex flex-col flex-grow text-black">
               <h3 className="font-bold text-xl leading-tight mb-2">The Auditor:</h3>
-              <p className="text-base leading-tight mb-4">Checks Zero-Sum every K pulls.<br/>Intervenes ONLY past threshold<br/>(hard-capped actions).</p>
+              <p className="text-base leading-tight mb-2">Zero-Sum Index (Gini) every K pulls.</p>
+              <p className="text-sm leading-tight mb-4">
+                If Gini &gt; 0.6 → one action: fee +0.005 OR cap −2%. Hard cumulative caps. Every
+                intervention logged to Dashboard.
+              </p>
               
               {/* Auditor Log Terminal */}
               <div ref={scrollRef} className="w-full h-24 bg-[#111] border-4 border-[#333] p-2 custom-scroll overflow-y-auto">

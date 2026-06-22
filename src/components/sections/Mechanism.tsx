@@ -3,15 +3,22 @@ import Image from 'next/image';
 
 export function Mechanism() {
   return (
-    <section id="mechanism" className="w-full bg-transparent border-b-4 border-black py-16 overflow-x-auto relative">
-      <div className="w-[1300px] mx-auto relative h-[900px] font-pixel shrink-0">
-        
-        {/* Title */}
-        <div className="absolute top-0 left-4 z-10">
-          <h2 className="text-4xl font-bold font-header text-black">MECHANISM</h2>
-          <p className="text-xl font-bold text-black mt-3">(The Cycle)</p>
+    <section id="mechanism" className="w-full bg-transparent border-b-4 border-black py-16 overflow-x-auto relative font-pixel">
+      <div className="max-w-7xl mx-auto px-4 mb-8">
+        <h2 className="text-4xl font-bold font-header text-black">MECHANISM</h2>
+        <p className="text-lg font-bold text-black mt-2 mb-3">(The Cycle)</p>
+        <p className="text-base max-w-3xl leading-relaxed mb-4">
+          Four steps. Hub data feeds step 3 — loot odds rescale before every pull. Follow arrows:
+          bond tokens → trigger exposure → odds shift from Regime Score → mint Mutation NFT.
+        </p>
+        <div className="flex flex-wrap gap-2 text-xs font-bold">
+          <span className="bg-[#D0F0C0] border-2 border-black px-2 py-1">① Bond</span>
+          <span className="bg-[#FFF3CD] border-2 border-black px-2 py-1">② Trigger</span>
+          <span className="bg-[#E6E6FA] border-2 border-black px-2 py-1">③ Odds Rescale ← Hub</span>
+          <span className="bg-[#F59E0B] border-2 border-black px-2 py-1">④ Mint NFT</span>
         </div>
-
+      </div>
+      <div className="w-[1300px] mx-auto relative h-[900px] shrink-0">
         {/* SVG Arrows Layer */}
         <svg viewBox="0 0 1300 900" className="absolute inset-0 w-full h-full z-0 pointer-events-none">
            {/* Define Arrow Styles */}
@@ -83,10 +90,11 @@ export function Mechanism() {
                 <span>EPIC M3</span>
                 <span><span className="text-green-600 font-bold">+</span>-------</span>
               </div>
-              <div className="flex justify-between text-mutagen-red animate-pulse font-bold pb-1">
-                <span>UNKNOWN M4</span>
-                <span>ERROR //</span>
+              <div className="flex justify-between border-b border-dashed border-gray-500 pb-2">
+                <span>LEGENDARY</span>
+                <span><span className="text-amber-600 font-bold">++</span>------</span>
               </div>
+              <p className="text-[10px] mt-2 opacity-70">Weights shift with Regime Score (CALM → TURBULENT)</p>
             </div>
           </div>
         </div>
@@ -118,7 +126,7 @@ export function Mechanism() {
             Mint Mutation NFT
           </div>
           <div className="w-32 h-32 bg-[#6A0DAD] border-4 border-black p-1 shadow-[4px_4px_0_#000] relative">
-            <Image src="/mutagen.png" alt="Mutation NFT" width={128} height={128} className="[image-rendering:pixelated] w-full h-full object-cover border-2 border-[#9370DB]" />
+            <Image src="/mutagen.png" alt="Mutation NFT" width={128} height={128} className="[image-rendering:pixelated] object-contain w-full h-auto" />
           </div>
         </div>
 

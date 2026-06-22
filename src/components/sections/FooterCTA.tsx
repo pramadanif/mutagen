@@ -2,68 +2,64 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export function FooterCTA() {
   return (
     <section className="w-full relative font-pixel overflow-hidden bg-[#EAE4D5] border-t-8 border-black py-20 mt-16 shadow-[0_16px_0_#B6B09F] z-10">
       
-      {/* Background Pacman Animation */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-30">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <style>
-            {`
-              @keyframes movePacmanRight {
-                0% { transform: translateX(-200px); }
-                100% { transform: translateX(120vw); }
-              }
-              @keyframes movePacmanLeft {
-                0% { transform: translateX(120vw) scaleX(-1); }
-                100% { transform: translateX(-200px) scaleX(-1); }
-              }
-              .pacman-right-1 { animation: movePacmanRight 15s linear infinite; }
-              .pacman-left-1 { animation: movePacmanLeft 22s linear infinite 5s; }
-            `}
-          </style>
-          
-          {/* Static dots grid */}
-          <pattern id="pacdots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-             <rect x="28" y="28" width="4" height="4" fill="#000" />
-          </pattern>
-          <rect x="0" y="0" width="100%" height="100%" fill="url(#pacdots)" opacity="0.3" />
+      {/* Background Floating Pixel Art Animation */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-40 overflow-hidden">
+        <style>
+          {`
+            @keyframes floatRight {
+              0% { transform: translateX(-300px); }
+              100% { transform: translateX(120vw); }
+            }
+            @keyframes floatLeft {
+              0% { transform: translateX(120vw); }
+              100% { transform: translateX(-300px); }
+            }
+            @keyframes bobbing {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-30px); }
+            }
+            .animate-float-right-1 { animation: floatRight 20s linear infinite; }
+            .animate-float-right-2 { animation: floatRight 25s linear infinite 10s; }
+            .animate-float-left-1 { animation: floatLeft 18s linear infinite 5s; }
+            .animate-float-left-2 { animation: floatLeft 22s linear infinite 15s; }
+            .animate-bob { animation: bobbing 3s ease-in-out infinite; }
+            .animate-bob-slow { animation: bobbing 4s ease-in-out infinite 1s; }
+          `}
+        </style>
 
-          {/* Top Track (Right bound) */}
-          <g className="pacman-right-1">
-             <svg y="10%" width="80" height="80" viewBox="0 0 100 100" className="overflow-visible">
-               <path d="M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z" fill="#FFBD2E" stroke="#000" strokeWidth="6">
-                 <animate attributeName="d" values="M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z; M 50 50 L 100 48 A 45 45 0 1 1 100 52 Z; M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z" dur="0.4s" repeatCount="indefinite" />
-               </path>
-             </svg>
-             <svg x="-90" y="10%" width="80" height="80" viewBox="0 0 100 100" className="overflow-visible">
-               <path d="M 20 90 L 20 50 A 30 30 0 0 1 80 50 L 80 90 L 70 80 L 60 90 L 50 80 L 40 90 L 30 80 Z" fill="#FF5F56" stroke="#000" strokeWidth="6" />
-               <circle cx="35" cy="40" r="10" fill="#FFF" stroke="#000" strokeWidth="3"/>
-               <circle cx="65" cy="40" r="10" fill="#FFF" stroke="#000" strokeWidth="3"/>
-               <circle cx="40" cy="40" r="4" fill="#000"/>
-               <circle cx="70" cy="40" r="4" fill="#000"/>
-             </svg>
-          </g>
+        {/* Floating Mutagen moving right */}
+        <div className="absolute top-[10%] left-0 animate-float-right-1">
+          <div className="animate-bob">
+            <Image src="/mutagen.png" alt="mutagen" width={150} height={150} className="[image-rendering:pixelated] opacity-60" />
+          </div>
+        </div>
 
-          {/* Bottom Track (Left bound) */}
-          <g className="pacman-left-1">
-             <svg y="75%" width="120" height="120" viewBox="0 0 100 100" className="overflow-visible">
-               <path d="M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z" fill="#FFBD2E" stroke="#000" strokeWidth="5">
-                 <animate attributeName="d" values="M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z; M 50 50 L 100 48 A 45 45 0 1 1 100 52 Z; M 50 50 L 100 20 A 45 45 0 1 1 100 80 Z" dur="0.3s" repeatCount="indefinite" />
-               </path>
-             </svg>
-             <svg x="-100" y="75%" width="120" height="120" viewBox="0 0 100 100" className="overflow-visible">
-               <path d="M 20 90 L 20 50 A 30 30 0 0 1 80 50 L 80 90 L 70 80 L 60 90 L 50 80 L 40 90 L 30 80 Z" fill="#39FF14" stroke="#000" strokeWidth="5" />
-               <circle cx="35" cy="40" r="10" fill="#FFF" stroke="#000" strokeWidth="3"/>
-               <circle cx="65" cy="40" r="10" fill="#FFF" stroke="#000" strokeWidth="3"/>
-               <circle cx="30" cy="40" r="4" fill="#000"/>
-               <circle cx="60" cy="40" r="4" fill="#000"/>
-             </svg>
-          </g>
+        {/* Floating Robot moving left */}
+        <div className="absolute top-[65%] right-0 animate-float-left-1">
+          <div className="animate-bob-slow">
+            <Image src="/robot.png" alt="robot" width={180} height={180} className="[image-rendering:pixelated] opacity-60 scale-x-[-1]" />
+          </div>
+        </div>
 
-        </svg>
+        {/* Floating Auditor moving right */}
+        <div className="absolute top-[40%] left-0 animate-float-right-2">
+          <div className="animate-bob-slow">
+            <Image src="/auditor.png" alt="auditor" width={160} height={160} className="[image-rendering:pixelated] opacity-50" />
+          </div>
+        </div>
+
+        {/* Floating Test Tubes moving left */}
+        <div className="absolute top-[20%] right-0 animate-float-left-2">
+          <div className="animate-bob">
+            <Image src="/bottlelab.png" alt="bottles" width={120} height={120} className="[image-rendering:pixelated] opacity-60" />
+          </div>
+        </div>
       </div>
 
       <div className="relative z-10 max-w-[1400px] mx-auto flex flex-col items-center justify-center text-center px-4">
@@ -84,16 +80,15 @@ export function FooterCTA() {
         </div>
 
         {/* Call To Action Button */}
-        <div className="relative w-full max-w-4xl z-10 mb-8 group cursor-pointer">
+        <Link href="/lab" className="relative w-full max-w-4xl z-10 mb-8 group block">
           <div className="absolute top-3 left-4 w-full h-full bg-white border-4 border-black group-hover:top-1 group-hover:left-1 transition-all duration-200 shadow-[8px_8px_0_#B6B09F]"></div>
-          <button className="relative w-full py-8 text-3xl md:text-5xl font-header bg-[#39FF14] text-black border-4 border-black group-hover:-translate-y-1 group-hover:-translate-x-1 transition-transform duration-200">
+          <span className="relative block w-full py-8 text-center text-3xl md:text-5xl font-header bg-[#39FF14] text-black border-4 border-black group-hover:-translate-y-1 group-hover:-translate-x-1 transition-transform duration-200">
             CONNECT WALLET & EXPERIMENT
-          </button>
-        </div>
+          </span>
+        </Link>
 
-        {/* Small text block */}
-        <p className="text-sm md:text-xl z-10 font-bold text-black bg-white px-6 py-2 border-2 border-black">
-          Testnet token enables 3 advanced adventures,<br/>operation and the evident animations.
+        <p className="text-sm md:text-base z-10 font-bold text-black bg-white px-6 py-2 border-2 border-black text-center">
+          Bond ATOM in The Lab → trigger exposure → see your pull on the Dashboard.
         </p>
 
       </div>
