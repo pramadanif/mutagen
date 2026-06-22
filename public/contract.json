@@ -1,0 +1,10 @@
+{
+  "chainId": "provider",
+  "rpc": "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz",
+  "codeId": 514,
+  "contractAddress": "cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g",
+  "relayer": "cosmos18tl6csmj6meh3t4u5zpvkjd78un4mwf6sz27kr",
+  "deployedAt": "2026-06-22T16:18:26.989Z",
+  "uploadTx": "A931945E0050FFFC872F90CE820152A01C599439C219CDB76330DE5DB15F3753",
+  "instantiateTx": "8ED92D1C339F8394A8A608DDAFC61F64F489F32E7B184CEE8B115F72A7358C9D"
+}
