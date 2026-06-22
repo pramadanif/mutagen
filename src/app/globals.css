@@ -44,6 +44,37 @@
   @keyframes flowDown {
     to { stroke-dashoffset: -40; }
   }
+
+  @keyframes tankGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px #39FF14); }
+    50% { filter: drop-shadow(0 0 24px #39FF14) brightness(1.1); }
+  }
+
+  @keyframes bubble {
+    0% { transform: translateY(0) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-80px) scale(0.5); opacity: 0; }
+  }
+
+  @keyframes flash {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes scrollWave {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  --animate-tank-glow: tankGlow 1.2s ease-in-out infinite;
+  --animate-bubble: bubble 1s ease-out infinite;
+  --animate-flash: flash 0.4s ease-out forwards;
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
+  --animate-scroll-wave: scrollWave 2s linear infinite;
 }
 
 :root {
@@ -144,4 +175,15 @@ body {
   width: 0; height: 0;
   border-left: 10px solid transparent; border-right: 10px solid transparent;
   border-top: 15px solid #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tank-glow,
+  .animate-bubble,
+  .animate-flash,
+  .animate-fade-in,
+  .animate-scroll-wave,
+  .animate-pulse {
+    animation: none !important;
+  }
 }
