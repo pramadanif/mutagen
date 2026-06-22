@@ -5,7 +5,7 @@ import { log } from "./logger.js";
 
 async function main() {
   startServer();
-  await runOracleCycle();
+  void runOracleCycle();
   setInterval(() => {
     void runOracleCycle();
   }, config.intervalMs);

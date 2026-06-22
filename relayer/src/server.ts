@@ -71,7 +71,18 @@ export function createServer() {
 
 export function startServer(): void {
   const app = createServer();
-  app.listen(config.port, config.host, () => {
+  const server = app.listen(config.port, config.host, () => {
     log("info", "relayer_started", { host: config.host, port: config.port });
+  });
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      log("error", "port_in_use", {
+        port: config.port,
+        hint: `Another process owns port ${config.port}. Run: ss -tlnp | grep ${config.port}`,
+      });
+    } else {
+      log("error", "server_error", { error: String(err) });
+    }
+    process.exit(1);
   });
 }
