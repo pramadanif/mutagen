@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { PixelButton } from '@/components/ui/PixelButton';
+import Link from 'next/link';
 import { WordTypewriter } from '@/components/ui/WordTypewriter';
 
 export function Hero() {
@@ -25,8 +25,8 @@ export function Hero() {
         <div className="flex flex-col justify-between h-full w-full lg:w-1/4 z-10 self-stretch">
           {/* Top text part */}
           <div className="pt-2">
-            <h2 className="font-header text-2xl text-black mb-12">The Incubator</h2>
-            
+            <p className="text-xs font-bold text-mutagen-green mb-2 tracking-widest">MAD EASY ON COSMOS</p>
+            <h2 className="font-header text-2xl text-black mb-6">The Incubator</h2>
             <h2 className="font-header text-[1.1rem] leading-relaxed mb-4 text-black h-[120px]">
               <WordTypewriter 
                 texts={[
@@ -36,9 +36,12 @@ export function Hero() {
                 ]}
               />
             </h2>
-            <PixelButton className="px-4 py-3 w-[95%] text-[0.65rem] !bg-[#98fb98] hover:!bg-[#7cfc00]">
+            <Link
+              href="/lab"
+              className="inline-block bg-mutagen-green text-black border-4 border-black uppercase font-header text-[0.65rem] px-4 py-3 w-[95%] text-center shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] transition-all"
+            >
               INITIATE MUTAGEN EXPOSURE
-            </PixelButton>
+            </Link>
           </div>
 
           {/* Test Tubes at the bottom */}
@@ -65,9 +68,12 @@ export function Hero() {
             />
             {/* Center Button overlapping bottom of incubator */}
             <div className="absolute bottom-4 w-max">
-               <PixelButton className="px-6 py-2 text-[0.7rem] animate-pulse !bg-[#98fb98] hover:!bg-[#7cfc00]">
+               <Link
+                 href="/lab"
+                 className="inline-block bg-mutagen-green text-black border-4 border-black uppercase font-header text-[0.7rem] px-6 py-2 shadow-[4px_4px_0px_#000] animate-pulse hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+               >
                  INITIATE MUTAGEN EXPOSURE
-               </PixelButton>
+               </Link>
             </div>
           </div>
         </div>
