@@ -3,6 +3,7 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { config } from "../config.js";
 import { log } from "../logger.js";
+import { toCosmosDecimal } from "../utils.js";
 import type { RegimeInference } from "../state.js";
 
 export async function submitRegimeUpdate(
@@ -29,9 +30,9 @@ export async function submitRegimeUpdate(
   const msg = {
     update_regime_score: {
       score: inference.score,
-      bonded_delta: inference.features.bondedRatioDelta.toString(),
-      gov_delta: inference.features.govActivityDelta.toString(),
-      ibc_delta: inference.features.ibcVolumeDelta.toString(),
+      bonded_delta: toCosmosDecimal(inference.features.bondedRatioDelta),
+      gov_delta: toCosmosDecimal(inference.features.govActivityDelta),
+      ibc_delta: toCosmosDecimal(inference.features.ibcVolumeDelta),
     },
   };
 
