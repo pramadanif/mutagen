@@ -8,8 +8,9 @@ import { ResonanceBonusPanel } from "@/components/lab/ResonanceBonusPanel";
 import { RegimeGauge } from "@/components/lab/RegimeGauge";
 import { LootTableBars } from "@/components/lab/LootTableBars";
 import { HubPulsePanel, RegimeShiftIndicator } from "@/components/lab/HubPulsePanel";
+import { IncubatorStage, type IncubatorPhase } from "@/components/lab/IncubatorStage";
 import { ASSETS, MUTATION_IMAGES, TIER_COLORS } from "@/lib/assets";
-import { getBondHistory, getHubPulse, setExperiments } from "@/lib/experiment-store";
+import { getBondHistory, getHubPulse } from "@/lib/experiment-store";
 import {
   bondTokens,
   getSigningClient,
@@ -19,10 +20,18 @@ import {
 import { postExperimentToRelayer } from "@/lib/relayer-client";
 import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import { applyResonanceBonus, computeLootTable, normalizeWeights } from "@/lib/loot-table";
+import {
+  isLabSoundEnabled,
+  playChargeSound,
+  playErrorSound,
+  playFlashSound,
+  playRevealSound,
+  playRumbleSound,
+  setLabSoundEnabled,
+  stopChargeSound,
+} from "@/lib/lab-sounds";
 import { useStoreRefresh, usePrefersReducedMotion } from "@/lib/hooks";
 import type { PullResult, ResonanceStatus } from "@/lib/types";
-
-type PullPhase = "idle" | "glowing" | "flash" | "reveal";
 
 const DENOMS = ["uatom", "ulab"] as const;
 
@@ -46,7 +55,10 @@ function ResultCard({
 }) {
   const colors = TIER_COLORS[result.tier];
   return (
-    <div className="bg-white border-4 border-black shadow-[4px_4px_0_#000] p-4 text-center animate-fade-in">
+    <div
+      className="bg-white border-4 border-black shadow-[4px_4px_0_#000] p-4 text-center animate-reveal-card"
+      style={{ boxShadow: `4px 4px 0 #000, 0 0 24px ${colors.glow}` }}
+    >
       <Image
         src={MUTATION_IMAGES[result.tier]}
         alt={result.tier}
@@ -59,7 +71,7 @@ function ResultCard({
         style={{
           backgroundColor: colors.bg,
           color: colors.text,
-          boxShadow: `0 0 12px ${colors.glow}`,
+          boxShadow: `0 0 16px ${colors.glow}`,
         }}
       >
         {result.tier}
@@ -79,12 +91,13 @@ export function LabPage() {
 
   const [amount, setAmount] = useState("0.1");
   const [denom, setDenom] = useState<string>("uatom");
-  const [phase, setPhase] = useState<PullPhase>("idle");
+  const [phase, setPhase] = useState<IncubatorPhase>("idle");
   const [result, setResult] = useState<PullResult | null>(null);
   const [lastBond, setLastBond] = useState({ amount: 0, denom: "uatom" });
   const [txHash, setTxHash] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const [resonance, setResonance] = useState<ResonanceStatus>({
     hubStaker: false,
     nftHolder: false,
@@ -95,6 +108,10 @@ export function LabPage() {
 
   const hubPulse = getHubPulse();
   const bondHistory = getBondHistory();
+
+  useEffect(() => {
+    setSoundOn(isLabSoundEnabled());
+  }, []);
 
   useEffect(() => {
     if (!address) {
@@ -109,6 +126,7 @@ export function LabPage() {
       })
     );
   }, [address]);
+
   const lootTable = normalizeWeights(
     applyResonanceBonus(computeLootTable(hubPulse.regimeScore), resonance)
   );
@@ -117,32 +135,43 @@ export function LabPage() {
     (pullResult: PullResult, bondAmt: number, bondDenom: string) => {
       const id = ++pullIdRef.current;
       setResult(null);
-      setPhase(reducedMotion ? "reveal" : "glowing");
 
-      const timings = reducedMotion
-        ? { glow: 0, flash: 0, reveal: 100 }
-        : { glow: 1200, flash: 400, reveal: 600 };
-
-      if (!reducedMotion) {
-        setTimeout(() => {
-          if (pullIdRef.current !== id) return;
-          setPhase("flash");
-        }, timings.glow);
-        setTimeout(() => {
-          if (pullIdRef.current !== id) return;
-          setPhase("reveal");
-          setResult(pullResult);
-          setLastBond({ amount: bondAmt, denom: bondDenom });
-        }, timings.glow + timings.flash);
-      } else {
-        setTimeout(() => {
-          setResult(pullResult);
-          setLastBond({ amount: bondAmt, denom: bondDenom });
-        }, timings.reveal);
+      if (reducedMotion) {
+        setPhase("reveal");
+        setResult(pullResult);
+        setLastBond({ amount: bondAmt, denom: bondDenom });
+        playRevealSound(pullResult.tier);
+        return;
       }
+
+      const timings = { rumble: 700, flash: 450 };
+
+      setPhase("rumble");
+      playRumbleSound();
+
+      setTimeout(() => {
+        if (pullIdRef.current !== id) return;
+        setPhase("flash");
+        playFlashSound();
+      }, timings.rumble);
+
+      setTimeout(() => {
+        if (pullIdRef.current !== id) return;
+        setPhase("reveal");
+        setResult(pullResult);
+        setLastBond({ amount: bondAmt, denom: bondDenom });
+        playRevealSound(pullResult.tier);
+      }, timings.rumble + timings.flash);
     },
     [reducedMotion]
   );
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setLabSoundEnabled(next);
+    if (!next) stopChargeSound();
+  };
 
   const handleTrigger = async () => {
     setError("");
@@ -162,6 +191,12 @@ export function LabPage() {
     }
 
     setLoading(true);
+    setResult(null);
+    if (!reducedMotion) {
+      setPhase("charge");
+      playChargeSound();
+    }
+
     try {
       const signer = await getOfflineSigner();
       const client = await getSigningClient(signer);
@@ -187,6 +222,8 @@ export function LabPage() {
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
+      stopChargeSound();
+      playErrorSound();
       setError(e instanceof Error ? e.message : "On-chain pull failed.");
       setPhase("idle");
     } finally {
@@ -199,13 +236,22 @@ export function LabPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8 font-pixel">
-      <div className="mb-6">
-        <h1 className="font-header text-2xl md:text-3xl">The Lab</h1>
-        <p className="text-lg mt-2">Bond ATOM to trigger an exposure.</p>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-header text-2xl md:text-3xl">The Lab</h1>
+          <p className="text-lg mt-2">Bond ATOM to trigger an exposure.</p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleSound}
+          className="font-header text-xs border-4 border-black px-3 py-2 bg-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform"
+          aria-pressed={soundOn}
+        >
+          {soundOn ? "🔊 SFX ON" : "🔇 SFX OFF"}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
-        {/* Left — Your Status */}
         <PanelShell title="Your Status">
           <div className="space-y-4">
             <div className="text-sm font-bold">
@@ -245,41 +291,24 @@ export function LabPage() {
           </div>
         </PanelShell>
 
-        {/* Center — The Incubator */}
         <PanelShell title="The Incubator">
           <div className="flex flex-col items-center gap-6">
-            <div
-              className={`relative w-full max-w-sm aspect-square flex items-center justify-center ${
-                phase === "glowing" ? "animate-tank-glow" : ""
-              }`}
-            >
-              <Image
-                src={ASSETS.gachaMachine}
-                alt="Gacha Machine"
-                width={320}
-                height={320}
-                className="w-full h-auto [image-rendering:pixelated] object-contain relative z-10"
-                priority
-              />
-              {phase === "glowing" && !reducedMotion && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {[...Array(6)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-3 h-3 rounded-full bg-mutagen-green animate-bubble"
-                      style={{
-                        left: `${20 + i * 12}%`,
-                        bottom: "20%",
-                        animationDelay: `${i * 0.2}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-              {phase === "flash" && (
-                <div className="absolute inset-0 bg-mutagen-green/60 z-20 animate-flash" />
-              )}
-            </div>
+            <IncubatorStage
+              phase={phase}
+              reducedMotion={reducedMotion}
+              revealTier={result?.tier}
+            />
+
+            {phase === "charge" && !reducedMotion && (
+              <p className="font-header text-sm text-mutagen-green animate-fast-blink">
+                CHARGING REACTOR...
+              </p>
+            )}
+            {phase === "rumble" && !reducedMotion && (
+              <p className="font-header text-sm text-mutagen-red animate-fast-blink">
+                CRITICAL MASS!!!
+              </p>
+            )}
 
             {result && phase === "reveal" && (
               <ResultCard result={result} bondAmount={lastBond.amount} denom={lastBond.denom} />
@@ -323,7 +352,7 @@ export function LabPage() {
                 disabled={busy}
                 className="w-full py-4 text-sm"
               >
-                {loading ? "SIGNING..." : "TRIGGER EXPOSURE"}
+                {loading ? "SIGNING..." : phase === "charge" ? "CHARGING..." : "TRIGGER EXPOSURE"}
               </PixelButton>
             </div>
 
@@ -336,7 +365,6 @@ export function LabPage() {
           </div>
         </PanelShell>
 
-        {/* Right — Live Odds */}
         <PanelShell title="Live Odds">
           <div className="space-y-4">
             <LootTableBars table={lootTable} />
