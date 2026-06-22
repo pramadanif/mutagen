@@ -16,22 +16,31 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const { address, connect, disconnect, isWalletConnected } = useChain("cosmoshub");
+  const { address, walletRepo, disconnect, isWalletConnected } = useChain("cosmoshub");
   const [showBanner, setShowBanner] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [connectError, setConnectError] = useState("");
 
   const handleConnect = async (e: React.MouseEvent) => {
     e.preventDefault();
+    setConnectError("");
     try {
       if (isWalletConnected) {
         await disconnect();
-      } else {
-        await connect();
-        setShowBanner(true);
-        setTimeout(() => setShowBanner(false), 4000);
+        return;
       }
+
+      if (typeof window !== "undefined" && !("keplr" in window)) {
+        setConnectError("Install Keplr extension first.");
+        window.open("https://www.keplr.app/download", "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      await walletRepo.connect("keplr-extension", true);
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 4000);
     } catch {
-      // Keplr not installed or user rejected
+      setConnectError("Keplr connection rejected or failed.");
     }
   };
 
@@ -43,10 +52,23 @@ export function Header() {
     <>
       <header className="w-full bg-[#000] border-b-8 border-mutagen-shadow sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
-          <Link href="/" className="shrink-0">
+          <Link href="/" className="shrink-0 relative">
+            {/* Base glowing text */}
             <h1
               className="font-header text-xl md:text-2xl text-mutagen-green"
               style={{ textShadow: "0 0 10px #39FF14, 0 0 20px #39FF14" }}
+            >
+              MUTAGEN
+            </h1>
+            {/* Shining overlay text */}
+            <h1
+              className="font-header text-xl md:text-2xl absolute top-0 left-0 pointer-events-none animate-shine-text"
+              style={{
+                background: "linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.9) 50%, transparent 70%)",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                color: "transparent"
+              }}
             >
               MUTAGEN
             </h1>
@@ -116,6 +138,12 @@ export function Header() {
           </nav>
         )}
       </header>
+
+      {connectError && (
+        <div className="fixed top-20 right-4 z-[100] bg-black border-2 border-mutagen-red text-mutagen-red px-3 py-2 text-sm font-bold max-w-xs">
+          {connectError}
+        </div>
+      )}
 
       {showBanner && isWalletConnected && (
         <div

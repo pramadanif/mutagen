@@ -2,7 +2,7 @@
 
 import { ChainProvider } from "@cosmos-kit/react";
 import type { MainWalletBase } from "@cosmos-kit/core";
-import { wallets } from "@cosmos-kit/keplr";
+import { wallets } from "@cosmos-kit/keplr-extension";
 import { cosmoshubChain, cosmoshubAssetList } from "@/lib/cosmoshub-chain";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -12,11 +12,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       assetLists={[cosmoshubAssetList as never]}
       wallets={wallets as unknown as MainWalletBase[]}
       throwErrors={false}
-      walletConnectOptions={{
-        signClient: {
-          projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "mutagen-demo",
-        },
-      }}
       endpointOptions={{
         endpoints: {
           cosmoshub: {
