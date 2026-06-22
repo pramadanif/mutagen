@@ -10,10 +10,10 @@ let bondId = 0;
 const listeners = new Set<Listener>();
 
 let hubPulse: HubPulseData = {
-  bondedRatioDelta: 0.12,
-  govActivity: 3,
-  ibcVolumeDelta: 0.08,
-  regimeScore: 42,
+  bondedRatioDelta: 0,
+  govActivity: 0,
+  ibcVolumeDelta: 0,
+  regimeScore: 0,
 };
 
 let relayerInterventions: RelayerIntervention[] = [];
@@ -35,6 +35,16 @@ export function syncContractData(data: {
   interventions: RelayerIntervention[];
 }) {
   experiments = data.experiments;
+  bondHistory = [...data.experiments]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5)
+    .map((exp) => ({
+      id: exp.id,
+      amount: exp.bondAmount,
+      denom: exp.denom,
+      tier: exp.tier,
+      timestamp: exp.timestamp,
+    }));
   zeroSumIndex = data.zeroSumIndex;
   relayerInterventions = data.interventions;
   notify();

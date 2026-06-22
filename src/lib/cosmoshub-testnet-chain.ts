@@ -1,61 +1,22 @@
-/** Cosmos Hub provider testnet for MUTAGEN hackathon demo */
+import { chain, assetList } from "chain-registry/testnet/cosmosicsprovidertestnet";
+
+/** Cosmos Kit registry name — must match useChain() exactly */
+export const CHAIN_NAME = "cosmosicsprovidertestnet";
+
+/** Cosmos Kit expects snake_case fields from chain-registry schema */
 export const providerTestnetChain = {
-  chainId: "provider",
-  chainName: "cosmoshub-testnet",
-  chain_name: "cosmoshub-testnet",
-  chain_id: "provider",
-  chain_type: "cosmos",
-  bech32_prefix: "cosmos",
-  pretty_name: "Cosmos Hub Testnet",
-  prettyName: "Cosmos Hub Testnet",
-  network_type: "testnet",
-  status: "live",
-  apis: {
-    rpc: [
-      {
-        address: "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz",
-        provider: "hypha",
-      },
-    ],
-    rest: [
-      {
-        address: "https://rest.provider-sentry-02.ics-testnet.polypore.xyz",
-        provider: "hypha",
-      },
-    ],
-  },
-  staking: {
-    staking_tokens: [{ denom: "uatom" }],
-  },
-  fees: {
-    fee_tokens: [{ denom: "uatom", fixed_min_gas_price: 0.025, low_gas_price: 0.025, average_gas_price: 0.025, high_gas_price: 0.04 }],
-  },
-  slip44: 118,
-  currencies: [
-    {
-      coinDenom: "ATOM",
-      coinMinimalDenom: "uatom",
-      coinDecimals: 6,
-    },
-  ],
+  ...chain,
+  chain_name: chain.chainName,
+  chain_id: chain.chainId,
+  chain_type: chain.chainType,
+  bech32_prefix: chain.bech32Prefix,
+  pretty_name: chain.prettyName,
+  network_type: chain.networkType,
 } as const;
 
 export const providerTestnetAssetList = {
-  chainName: "cosmoshub-testnet",
-  chain_name: "cosmoshub-testnet",
-  assets: [
-    {
-      name: "Cosmos Hub Testnet Atom",
-      display: "ATOM",
-      symbol: "ATOM",
-      denom_units: [
-        { denom: "uatom", exponent: 0 },
-        { denom: "atom", exponent: 6 },
-      ],
-      base: "uatom",
-      type_asset: "sdk.coin",
-    },
-  ],
+  ...assetList,
+  chain_name: assetList.chainName,
 } as const;
 
 export const PROVIDER_RPC =

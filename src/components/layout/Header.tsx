@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useChain } from "@cosmos-kit/react";
 import { PixelButton } from "@/components/ui/PixelButton";
+import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 
 const NAV_LINKS = [
   { href: "/lab", label: "THE LAB" },
@@ -16,8 +17,8 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const { address, walletRepo, disconnect, isWalletConnected, getOfflineSigner } =
-    useChain("cosmoshub-testnet");
+  const { address, walletRepo, disconnect, isWalletConnected, status, message } =
+    useChain(CHAIN_NAME);
   const [showBanner, setShowBanner] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [connectError, setConnectError] = useState("");
@@ -40,8 +41,10 @@ export function Header() {
       await walletRepo.connect("keplr-extension", true);
       setShowBanner(true);
       setTimeout(() => setShowBanner(false), 4000);
-    } catch {
-      setConnectError("Keplr connection rejected or failed.");
+    } catch (err) {
+      const detail =
+        err instanceof Error ? err.message : message ?? "Keplr connection rejected or failed.";
+      setConnectError(detail);
     }
   };
 

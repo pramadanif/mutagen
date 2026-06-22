@@ -4,6 +4,7 @@ import { ChainProvider } from "@cosmos-kit/react";
 import type { MainWalletBase } from "@cosmos-kit/core";
 import { wallets } from "@cosmos-kit/keplr-extension";
 import {
+  CHAIN_NAME,
   providerTestnetAssetList,
   providerTestnetChain,
   PROVIDER_RPC,
@@ -19,15 +20,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       throwErrors={false}
       endpointOptions={{
         endpoints: {
-          cosmoshub: {
-            rpc: [PROVIDER_RPC],
-            rest: [PROVIDER_REST],
-          },
-          "cosmoshub-testnet": {
-            rpc: [PROVIDER_RPC],
-            rest: [PROVIDER_REST],
-          },
-          provider: {
+          [CHAIN_NAME]: {
             rpc: [PROVIDER_RPC],
             rest: [PROVIDER_REST],
           },

@@ -17,6 +17,7 @@ import {
   triggerExposure,
 } from "@/lib/contract";
 import { postExperimentToRelayer } from "@/lib/relayer-client";
+import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import { applyResonanceBonus, computeLootTable, normalizeWeights } from "@/lib/loot-table";
 import { useStoreRefresh, usePrefersReducedMotion } from "@/lib/hooks";
 import type { PullResult, ResonanceStatus } from "@/lib/types";
@@ -73,7 +74,7 @@ function ResultCard({
 }
 
 export function LabPage() {
-  const { address, isWalletConnected, getOfflineSigner } = useChain("cosmoshub-testnet");
+  const { address, isWalletConnected, getOfflineSigner } = useChain(CHAIN_NAME);
   useStoreRefresh();
 
   const [amount, setAmount] = useState("0.1");
