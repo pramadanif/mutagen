@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "relayer": "npm --prefix relayer run start",
+    "relayer:dev": "npm --prefix relayer run dev",
+    "relayer:verify": "npm --prefix relayer run verify",
+    "verify:phase2": "npm --prefix relayer run verify"
   },
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.38.1",

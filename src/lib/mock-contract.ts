@@ -2,6 +2,7 @@ import {
   addExperiment,
   getHubPulse,
 } from "./experiment-store";
+import { postExperimentToRelayer } from "./relayer-client";
 import {
   applyResonanceBonus,
   computeLootTable,
@@ -44,6 +45,8 @@ export function mockTriggerExposure(
   );
   const txHash = mockTxHash();
 
+  const payout = pendingBond.amount * tierData.payoutMultiplier;
+
   addExperiment({
     wallet,
     bondAmount: pendingBond.amount,
@@ -52,6 +55,13 @@ export function mockTriggerExposure(
     tier,
     txHash,
     timestamp: Date.now(),
+  });
+
+  void postExperimentToRelayer({
+    bondAmount: pendingBond.amount,
+    payout,
+    tier,
+    timestamp: new Date().toISOString(),
   });
 
   pendingBond = null;

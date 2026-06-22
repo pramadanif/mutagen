@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ASSETS } from "@/lib/assets";
-import { getExperiments, getHubPulse, getInterventionLogs } from "@/lib/experiment-store";
+import { getExperiments, getHubPulse, getInterventionLogs, getZeroSumIndex } from "@/lib/experiment-store";
 import { getRegimeColor } from "@/lib/loot-table";
 import { useStoreRefresh, usePrefersReducedMotion } from "@/lib/hooks";
 import { HubPulsePanel } from "@/components/lab/HubPulsePanel";
@@ -67,7 +67,7 @@ export function LiveDashboardPage() {
     return () => clearInterval(interval);
   }, [reducedMotion]);
 
-  const zeroSumIndex = 0.38;
+  const zeroSumIndex = getZeroSumIndex();
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8 font-pixel">
