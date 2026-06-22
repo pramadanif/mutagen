@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { PixelButton } from '@/components/ui/PixelButton';
+import { WordTypewriter } from '@/components/ui/WordTypewriter';
 
 export function Hero() {
   return (
@@ -26,8 +27,14 @@ export function Hero() {
           <div className="pt-2">
             <h2 className="font-header text-2xl text-black mb-12">The Incubator</h2>
             
-            <h2 className="font-header text-[1.1rem] leading-relaxed mb-4 text-black">
-              MUTAGEN:<br/>The Chain-Driven Gacha,<br/>Reshaped by the Hub.
+            <h2 className="font-header text-[1.1rem] leading-relaxed mb-4 text-black h-[120px]">
+              <WordTypewriter 
+                texts={[
+                  "MUTAGEN:\nThe Chain-Driven Gacha,\nReshaped by the Hub.",
+                  "BOND ATOM.\nTRIGGER EXPOSURE.\nCLAIM YOUR NFT.",
+                  "FAIRNESS VIA AUDITOR.\nVOLATILITY VIA HUB.\n100% ON-CHAIN."
+                ]}
+              />
             </h2>
             <PixelButton className="px-4 py-3 w-[95%] text-[0.65rem] !bg-[#98fb98] hover:!bg-[#7cfc00]">
               INITIATE MUTAGEN EXPOSURE
