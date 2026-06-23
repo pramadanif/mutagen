@@ -120,6 +120,16 @@ export async function queryListExperiments(
   return res.experiments ?? [];
 }
 
+export async function queryPlayerExperiments(
+  player: string
+): Promise<OnChainExperiment[]> {
+  const client = await getReadClient();
+  const res = await client.queryContractSmart(CONTRACT_ADDRESS, {
+    get_player_experiments: { player },
+  });
+  return res.experiments ?? [];
+}
+
 export async function queryResonanceBonus(
   address: string
 ): Promise<ResonanceStatus & { bonusMultiplier: number }> {

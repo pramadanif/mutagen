@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { getExperiments } from "@/lib/experiment-store";
-import { useStoreRefresh } from "@/lib/hooks";
+import { useState, useEffect } from "react";
+import { useChain } from "@cosmos-kit/react";
+import { mapOnChainExperiment, queryPlayerExperiments } from "@/lib/contract";
+import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import { MUTATION_IMAGES, TIER_COLORS } from "@/lib/assets";
 import type { Experiment } from "@/lib/types";
 
@@ -41,19 +42,56 @@ function MutationCard({ exp, onSelect }: { exp: Experiment; onSelect: (e: Experi
 }
 
 export function MyMutationsPage() {
-  useStoreRefresh();
-  const experiments = getExperiments();
+  const { address, isWalletConnected } = useChain(CHAIN_NAME);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Experiment | null>(null);
+
+  useEffect(() => {
+    if (!isWalletConnected || !address) {
+      setExperiments([]);
+      setSelected(null);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    void queryPlayerExperiments(address)
+      .then((exps) => {
+        if (!active) return;
+        setExperiments(exps.map(mapOnChainExperiment));
+      })
+      .catch(() => {
+        if (!active) return;
+        setExperiments([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [address, isWalletConnected]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8 font-pixel">
       <div className="mb-6">
         <h1 className="font-header text-2xl md:text-3xl">My Mutations</h1>
-        <p className="text-lg mt-2">Your collected mutation NFTs.</p>
+        <p className="text-lg mt-2">Your collected mutation NFTs — tied to the connected wallet only.</p>
       </div>
 
-      {experiments.length === 0 ? (
-        <p className="text-center opacity-60 py-12">No mutations yet. Visit The Lab.</p>
+      {!isWalletConnected || !address ? (
+        <p className="text-center opacity-60 py-12">
+          Connect your wallet to see your mutations.
+        </p>
+      ) : loading ? (
+        <p className="text-center opacity-60 py-12">Loading your mutations…</p>
+      ) : experiments.length === 0 ? (
+        <p className="text-center opacity-60 py-12">
+          No mutations for this wallet yet. Visit The Lab.
+        </p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...experiments].reverse().map((exp) => (
@@ -77,7 +115,7 @@ export function MyMutationsPage() {
               <div>Tier: {selected.tier}</div>
               <div>Bond: {selected.bondAmount} {selected.denom}</div>
               <div>Exposure: {selected.exposureScore}</div>
-              <div>Wallet: {selected.wallet}</div>
+              <div className="break-all">Wallet: {selected.wallet}</div>
               <div className="font-mono text-xs break-all bg-black text-[#27C93F] p-2 border-2 border-[#333]">
                 tx: {selected.txHash}
               </div>
