@@ -11,11 +11,12 @@ import { AccessType } from "cosmjs-types/cosmwasm/wasm/v1/types";
 
 const RPC =
   process.env.RPC_URL ??
-  "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz";
+  "https://rpc.provider-sentry-01.ics-testnet.polypore.xyz";
 const CHAIN_ID = process.env.CHAIN_ID ?? "provider";
-const MNEMONIC =
-  process.env.MNEMONIC ??
-  "order crucial rail crazy web follow tired hunt belt morning family bless panic face bag orient injury web fat universe you poem enact topple";
+const MNEMONIC = process.env.MNEMONIC;
+if (!MNEMONIC) {
+  throw new Error("MNEMONIC environment variable is required");
+}
 const RELAYER =
   process.env.RELAYER_ADDRESS ??
   "cosmos18tl6csmj6meh3t4u5zpvkjd78un4mwf6sz27kr";
@@ -40,8 +41,18 @@ async function main() {
   const uploadFee = calculateFee(3_000_000, gasPrice);
 
   const wasm = readFileSync(WASM_PATH);
-  console.log("Using existing Code ID 522 instead of re-uploading...");
-  const upload = { codeId: 522, transactionHash: "14D49E90F2171E96C100BE7BAC1E2A2017A60E422C0DC5131684ADE5DF004612" };
+  console.log("Uploading WASM...", wasm.length, "bytes");
+  const upload = await client.upload(
+    account.address,
+    wasm,
+    uploadFee,
+    "MUTAGEN upload",
+    {
+      permission: AccessType.ACCESS_TYPE_EVERYBODY,
+      addresses: [],
+    }
+  );
+  console.log("Code ID:", upload.codeId, "tx:", upload.transactionHash);
 
 
   const initMsg = { relayer: RELAYER };

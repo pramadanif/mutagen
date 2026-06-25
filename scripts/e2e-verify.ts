@@ -11,9 +11,10 @@ const RPC =
   process.env.RPC_URL ??
   "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz";
 const RELAYER = process.env.RELAYER_URL ?? "http://localhost:3091";
-const MNEMONIC =
-  process.env.MNEMONIC ??
-  "order crucial rail crazy web follow tired hunt belt morning family bless panic face bag orient injury web fat universe you poem enact topple";
+const MNEMONIC = process.env.MNEMONIC;
+if (!MNEMONIC) {
+  throw new Error("MNEMONIC environment variable is required");
+}
 
 const deployment = JSON.parse(
   readFileSync(join(process.cwd(), "public/contract.json"), "utf8")
