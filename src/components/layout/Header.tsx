@@ -12,8 +12,11 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "DASHBOARD" },
   { href: "/notebook", label: "NOTEBOOK" },
   { href: "/mutations", label: "MUTATIONS" },
+  { href: "/merge", label: "MERGE" },
+  { href: "/raid", label: "RAID ★", highlight: true },
   { href: "/how-it-works", label: "HOW IT WORKS" },
 ];
+
 
 export function Header() {
   const pathname = usePathname();
@@ -85,7 +88,7 @@ export function Header() {
                 href={link.href}
                 className={`hover:text-mutagen-green transition-colors ${
                   pathname === link.href ? "text-mutagen-green" : ""
-                }`}
+                } ${"highlight" in link && link.highlight ? "text-red-400 animate-pulse" : ""}`}
               >
                 {link.label}
               </Link>

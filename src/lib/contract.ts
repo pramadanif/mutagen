@@ -157,3 +157,118 @@ export function mapOnChainExperiment(exp: OnChainExperiment): Experiment {
     timestamp: Number(exp.timestamp.seconds) * 1000,
   };
 }
+
+// ─── Raid Boss contract helpers ──────────────────────────────────────────────
+
+import type { Specimen, BossState, LeaderboardResponse } from "./types";
+
+export async function mergeSpecimen(
+  client: SigningCosmWasmClient,
+  sender: string,
+  experimentIds: [number, number, number, number]
+): Promise<{ txHash: string; specimenId: number; archetype: string; power: number }> {
+  const fee = calculateFee(400_000, GAS_PRICE);
+  const result = await client.execute(
+    sender,
+    CONTRACT_ADDRESS,
+    { merge_specimen: { experiment_ids: experimentIds } },
+    fee,
+    "MUTAGEN merge specimen"
+  );
+  const attrs = result.events.flatMap((e) => e.attributes);
+  const specimenId = Number(attrs.find((a) => a.key === "specimen_id")?.value ?? "0");
+  const archetype = attrs.find((a) => a.key === "archetype")?.value ?? "Hybrid";
+  const power = Number(attrs.find((a) => a.key === "power")?.value ?? "0");
+  return { txHash: result.transactionHash, specimenId, archetype, power };
+}
+
+export async function attackBoss(
+  client: SigningCosmWasmClient,
+  sender: string,
+  specimenId: number
+): Promise<{ txHash: string; damage: number; bossHp: number; defeated: boolean }> {
+  const fee = calculateFee(350_000, GAS_PRICE);
+  const result = await client.execute(
+    sender,
+    CONTRACT_ADDRESS,
+    { attack_boss: { specimen_id: specimenId } },
+    fee,
+    "MUTAGEN attack boss"
+  );
+  const attrs = result.events.flatMap((e) => e.attributes);
+  const damage = Number(attrs.find((a) => a.key === "damage")?.value ?? "0");
+  const bossHp = Number(attrs.find((a) => a.key === "boss_hp")?.value ?? "0");
+  const defeated = attrs.some((a) => a.key === "boss_defeated" && a.value === "true");
+  return { txHash: result.transactionHash, damage, bossHp, defeated };
+}
+
+export async function claimReward(
+  client: SigningCosmWasmClient,
+  sender: string
+): Promise<{ txHash: string; rewardCredits: number }> {
+  const fee = calculateFee(300_000, GAS_PRICE);
+  const result = await client.execute(
+    sender,
+    CONTRACT_ADDRESS,
+    { claim_reward: {} },
+    fee,
+    "MUTAGEN claim reward"
+  );
+  const attrs = result.events.flatMap((e) => e.attributes);
+  const rewardCredits = Number(attrs.find((a) => a.key === "reward_credits")?.value ?? "0");
+  return { txHash: result.transactionHash, rewardCredits };
+}
+
+export async function queryBossState(): Promise<BossState> {
+  const client = await getReadClient();
+  return client.queryContractSmart(CONTRACT_ADDRESS, { get_boss_state: {} });
+}
+
+export async function queryLeaderboard(): Promise<LeaderboardResponse> {
+  const client = await getReadClient();
+  return client.queryContractSmart(CONTRACT_ADDRESS, { get_leaderboard: {} });
+}
+
+export async function queryPlayerSpecimens(player: string): Promise<Specimen[]> {
+  const client = await getReadClient();
+  const res = await client.queryContractSmart(CONTRACT_ADDRESS, {
+    get_player_specimens: { player },
+  });
+  return res.specimens ?? [];
+}
+
+export async function querySpecimen(id: number): Promise<Specimen> {
+  const client = await getReadClient();
+  return client.queryContractSmart(CONTRACT_ADDRESS, { get_specimen: { id } });
+}
+
+/** Compute client-side power preview for a merge selection (mirrors specimen.rs formula). */
+export function computeSpecimenPreview(tiers: string[]): {
+  archetype: string;
+  power: number;
+} {
+  const tierIndex = (t: string) => {
+    if (t === "RARE") return 1;
+    if (t === "EPIC") return 2;
+    if (t === "LEGENDARY") return 3;
+    return 0;
+  };
+  const tierBasePower = [100, 200, 400, 800];
+  const indices: number[] = tiers.map(tierIndex);
+
+  const counts = [0, 0, 0, 0];
+  indices.forEach((i) => counts[Math.min(i, 3)]++);
+  const unique = counts.filter((c) => c > 0).length;
+
+  let archetype = "Hybrid";
+  if (unique === 1) archetype = "Pure";
+  else if (unique === 2 && counts.every((c) => c === 0 || c === 2)) archetype = "Balanced";
+
+  const baseSum: number = indices.reduce((sum: number, i: number) => sum + tierBasePower[Math.min(i, 3)], 0);
+  const mult = archetype === "Pure" ? 1.3 : archetype === "Balanced" ? 1.0 : 0.85;
+  const power = Math.floor(baseSum * mult);
+
+
+  return { archetype, power };
+}
+

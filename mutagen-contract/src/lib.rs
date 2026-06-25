@@ -5,6 +5,7 @@ pub mod execute;
 pub mod loot;
 pub mod msg;
 pub mod query;
+pub mod specimen;
 pub mod state;
 
 #[cfg(all(not(feature = "library"), not(target_arch = "wasm32")))]
