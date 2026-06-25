@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useChain } from "@cosmos-kit/react";
 import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import {
@@ -11,6 +12,8 @@ import {
   mergeSpecimen,
   computeSpecimenPreview,
 } from "@/lib/contract";
+import { isLabSoundEnabled, setLabSoundEnabled } from "@/lib/lab-sounds";
+import { playBGM, stopBGM } from "@/lib/bgm";
 import { MUTATION_IMAGES, TIER_COLORS } from "@/lib/assets";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { playMergeCompleteSound } from "@/lib/raid-sounds";
@@ -73,6 +76,34 @@ function SelectionSlot({ index, exp, onRemove }: {
 
 export function MergePage() {
   const { address, isWalletConnected, getOfflineSigner } = useChain(CHAIN_NAME);
+  
+  const [soundOn, setSoundOn] = useState(true);
+
+  // Audio state
+  useEffect(() => {
+    setSoundOn(isLabSoundEnabled());
+    // Attempt to start BGM. Browsers might block it until a user interacts.
+    const startAudio = () => playBGM();
+    startAudio();
+    // Also try to start on first click if autoplay was blocked
+    window.addEventListener('click', startAudio, { once: true });
+    return () => {
+      window.removeEventListener('click', startAudio);
+      stopBGM();
+    };
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setLabSoundEnabled(next);
+    if (!next) {
+      stopBGM();
+    } else {
+      playBGM();
+    }
+  };
+
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<(Experiment | null)[]>([null, null, null, null]);
@@ -144,11 +175,27 @@ export function MergePage() {
 
   return (
     <div className="w-full min-h-[calc(100vh-72px)] flex flex-col p-4 md:p-6 font-pixel">
-      <div className="mb-4 shrink-0">
-        <h1 className="font-header text-2xl md:text-3xl">MERGE LAB</h1>
-        <p className="text-lg mt-2 opacity-70">
-          Combine 4 Mutation NFTs → one Specimen. Archetype determines phase sensitivity.
-        </p>
+      <div className="mb-4 shrink-0 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-header text-2xl md:text-3xl">MERGE LAB</h1>
+          <p className="text-sm opacity-80 mt-1">Combine 4 Mutation NFTs → one Specimen. Archetype determines phase sensitivity.</p>
+        </div>
+        <div className="flex gap-4 items-center flex-wrap">
+          <Link href="/" className="font-header text-xs border-4 border-black px-3 py-2 bg-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform text-black">
+            HOME
+          </Link>
+          <Link href="/raid" className="font-header text-xs border-4 border-black px-3 py-2 bg-mutagen-green shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform text-black">
+            GO TO RAID
+          </Link>
+          <button
+            type="button"
+            onClick={toggleSound}
+            className="font-header text-xs border-4 border-black px-3 py-2 bg-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform text-black"
+            aria-pressed={soundOn}
+          >
+            {soundOn ? "🔊 SOUND ON" : "🔇 SOUND OFF"}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6 min-h-0">

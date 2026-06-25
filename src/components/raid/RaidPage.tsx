@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useChain } from "@cosmos-kit/react";
 import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import {
@@ -13,6 +14,8 @@ import {
 } from "@/lib/contract";
 import { getHubPulse } from "@/lib/experiment-store";
 import { getRegimeLabel, getRegimeColor } from "@/lib/loot-table";
+import { isLabSoundEnabled, setLabSoundEnabled } from "@/lib/lab-sounds";
+import { playBGM, stopBGM } from "@/lib/bgm";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { BossHpBar } from "@/components/raid/BossHpBar";
@@ -156,6 +159,31 @@ function LeaderboardRow({
 export function RaidPage() {
   const { address, isWalletConnected, getOfflineSigner } = useChain(CHAIN_NAME);
   const hubPulse = getHubPulse();
+
+  const [soundOn, setSoundOn] = useState(true);
+
+  // Audio state
+  useEffect(() => {
+    setSoundOn(isLabSoundEnabled());
+    const startAudio = () => playBGM();
+    startAudio();
+    window.addEventListener('click', startAudio, { once: true });
+    return () => {
+      window.removeEventListener('click', startAudio);
+      stopBGM();
+    };
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setLabSoundEnabled(next);
+    if (!next) {
+      stopBGM();
+    } else {
+      playBGM();
+    }
+  };
 
   const [boss, setBoss] = useState<BossState | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -322,7 +350,23 @@ export function RaidPage() {
           <h1 className="font-header text-2xl md:text-3xl">RAID BOSS</h1>
           <p className="text-lg mt-2 opacity-70">Cooperative boss fight — coordinate with other players.</p>
         </div>
-        <PhaseTag score={hubPulse.regimeScore} />
+        <div className="flex gap-4 items-center flex-wrap">
+          <PhaseTag score={hubPulse.regimeScore} />
+          <Link href="/" className="font-header text-xs border-4 border-black px-3 py-2 bg-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform text-black">
+            HOME
+          </Link>
+          <Link href="/merge" className="font-header text-xs border-4 border-black px-3 py-2 bg-[#8B5CF6] text-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform">
+            MERGE LAB
+          </Link>
+          <button
+            type="button"
+            onClick={toggleSound}
+            className="font-header text-xs border-4 border-black px-3 py-2 bg-white shadow-[3px_3px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-transform text-black"
+            aria-pressed={soundOn}
+          >
+            {soundOn ? "🔊 SOUND ON" : "🔇 SOUND OFF"}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px_320px] xl:grid-cols-[1fr_380px_380px] gap-6 min-h-0">

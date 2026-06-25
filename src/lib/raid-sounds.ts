@@ -20,7 +20,7 @@ function getCtx(): AudioContext | null {
   return raidCtx;
 }
 
-/** Short percussive attack strike — fires on every successful AttackBoss tx. */
+/** Dramatic cinematic attack strike — fires on every successful AttackBoss tx. */
 export function playAttackHitSound(): void {
   if (!isLabSoundEnabled()) return;
   const audio = getCtx();
@@ -28,39 +28,52 @@ export function playAttackHitSound(): void {
 
   const now = audio.currentTime;
 
-  // Noise burst (impact body)
-  const bufSize = Math.floor(audio.sampleRate * 0.08);
+  // 1. Huge Sub-Bass Drop (Cinematic impact)
+  const subOsc = audio.createOscillator();
+  const subGain = audio.createGain();
+  subOsc.type = "sine";
+  subOsc.frequency.setValueAtTime(150, now);
+  subOsc.frequency.exponentialRampToValueAtTime(20, now + 1.0); // Deep drop
+  subGain.gain.setValueAtTime(0.8, now);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+  subOsc.connect(subGain);
+  subGain.connect(audio.destination);
+  subOsc.start(now);
+  subOsc.stop(now + 1.5);
+
+  // 2. High-pitched dramatic metallic strike
+  const strikeOsc = audio.createOscillator();
+  const strikeGain = audio.createGain();
+  strikeOsc.type = "square";
+  strikeOsc.frequency.setValueAtTime(800, now);
+  strikeOsc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+  strikeGain.gain.setValueAtTime(0.15, now);
+  strikeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  strikeOsc.connect(strikeGain);
+  strikeGain.connect(audio.destination);
+  strikeOsc.start(now);
+  strikeOsc.stop(now + 0.6);
+
+  // 3. Noise burst (The smash)
+  const bufSize = Math.floor(audio.sampleRate * 0.5);
   const buf = audio.createBuffer(1, bufSize, audio.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < bufSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 3);
   }
-  const src = audio.createBufferSource();
-  src.buffer = buf;
+  const noiseSrc = audio.createBufferSource();
+  noiseSrc.buffer = buf;
   const noiseFilter = audio.createBiquadFilter();
   noiseFilter.type = "bandpass";
-  noiseFilter.frequency.value = 1200;
-  noiseFilter.Q.value = 0.8;
+  noiseFilter.frequency.value = 800;
+  noiseFilter.Q.value = 0.5;
   const noiseGain = audio.createGain();
-  noiseGain.gain.setValueAtTime(0.18, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-  src.connect(noiseFilter);
+  noiseGain.gain.setValueAtTime(0.6, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  noiseSrc.connect(noiseFilter);
   noiseFilter.connect(noiseGain);
   noiseGain.connect(audio.destination);
-  src.start(now);
-
-  // Tonal punch (body resonance)
-  const osc = audio.createOscillator();
-  const oscGain = audio.createGain();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(280, now);
-  osc.frequency.exponentialRampToValueAtTime(60, now + 0.1);
-  oscGain.gain.setValueAtTime(0.12, now);
-  oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-  osc.connect(oscGain);
-  oscGain.connect(audio.destination);
-  osc.start(now);
-  osc.stop(now + 0.18);
+  noiseSrc.start(now);
 }
 
 /** Heavy low thud — the boss reacting to being hit. */
@@ -73,14 +86,25 @@ export function playBossHitReactionSound(): void {
   const osc = audio.createOscillator();
   const gain = audio.createGain();
   osc.type = "sine";
-  osc.frequency.setValueAtTime(80, now);
-  osc.frequency.exponentialRampToValueAtTime(30, now + 0.25);
-  gain.gain.setValueAtTime(0.22, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-  osc.connect(gain);
+  osc.frequency.setValueAtTime(60, now);
+  osc.frequency.exponentialRampToValueAtTime(20, now + 0.4);
+  gain.gain.setValueAtTime(0.5, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  
+  // Distortion for growl
+  const waveShaper = audio.createWaveShaper();
+  const curve = new Float32Array(400);
+  for (let i = 0; i < 400; ++i) {
+    const x = (i * 2) / 400 - 1;
+    curve[i] = ((3 + 20) * x * 20 * (Math.PI / 180)) / (Math.PI + 20 * Math.abs(x));
+  }
+  waveShaper.curve = curve;
+  
+  osc.connect(waveShaper);
+  waveShaper.connect(gain);
   gain.connect(audio.destination);
   osc.start(now);
-  osc.stop(now + 0.35);
+  osc.stop(now + 0.6);
 }
 
 /** Victory fanfare — fires when Boss HP hits 0. */
@@ -90,63 +114,87 @@ export function playBossDefeatedSound(): void {
   if (!audio) return;
 
   const now = audio.currentTime;
-  // Ascending arpeggio (5 notes) + final chord
-  const notes = [262, 330, 392, 523, 659, 784];
-  notes.forEach((freq, i) => {
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    const start = now + i * 0.11;
-    osc.type = i === notes.length - 1 ? "square" : "triangle";
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.1, start + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
-    osc.connect(gain);
-    gain.connect(audio.destination);
-    osc.start(start);
-    osc.stop(start + 0.5);
-  });
+  // Epic triumphant chord progression
+  const chords = [
+    { time: 0, notes: [261.63, 329.63, 392.00] }, // C Major
+    { time: 0.6, notes: [349.23, 440.00, 523.25] }, // F Major
+    { time: 1.2, notes: [392.00, 493.88, 587.33] }, // G Major
+    { time: 1.8, notes: [523.25, 659.25, 783.99, 1046.50] } // High C Major Boom
+  ];
 
-  // Explosion noise burst at the moment of defeat
-  const bufSize = Math.floor(audio.sampleRate * 0.35);
-  const buf = audio.createBuffer(1, bufSize, audio.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < bufSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 1.5);
-  }
-  const noiseSrc = audio.createBufferSource();
-  noiseSrc.buffer = buf;
-  const noiseGain = audio.createGain();
-  noiseGain.gain.setValueAtTime(0.14, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-  noiseSrc.connect(noiseGain);
-  noiseGain.connect(audio.destination);
-  noiseSrc.start(now);
+  chords.forEach(chord => {
+    chord.notes.forEach(freq => {
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      const start = now + chord.time;
+      osc.type = "sawtooth";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.05, start + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + (chord.time === 1.8 ? 3.0 : 0.6));
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(start);
+      osc.stop(start + (chord.time === 1.8 ? 3.5 : 0.7));
+    });
+  });
 }
 
-/** Synthesis "level up" — fires on successful MergeSpecimen. */
+/** Epic Cinematic "BWAAAAH" — fires on successful MergeSpecimen. */
 export function playMergeCompleteSound(): void {
   if (!isLabSoundEnabled()) return;
   const audio = getCtx();
   if (!audio) return;
 
   const now = audio.currentTime;
-  // Rising major arpeggio
-  const notes = [392, 494, 587, 784];
-  notes.forEach((freq, i) => {
+  // Massive power chord (C2, C3, G3, C4, G4)
+  const chord = [65.41, 130.81, 196.00, 261.63, 392.00]; 
+  chord.forEach((freq, i) => {
     const osc = audio.createOscillator();
     const gain = audio.createGain();
-    const start = now + i * 0.08;
-    osc.type = "triangle";
+    // Thick brassy tone
+    osc.type = i % 2 === 0 ? "sawtooth" : "square";
+    // Slight detune for massive thickness
+    osc.detune.value = (Math.random() - 0.5) * 15;
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.08, start + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
-    osc.connect(gain);
+    
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.1); // Strong immediate attack
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 3.5); // Long dramatic tail
+    
+    // Brassy filter sweep (opens up then slowly closes)
+    const filter = audio.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(300, now);
+    filter.frequency.exponentialRampToValueAtTime(4000, now + 0.15);
+    filter.frequency.exponentialRampToValueAtTime(100, now + 3.5);
+
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(audio.destination);
-    osc.start(start);
-    osc.stop(start + 0.35);
+    osc.start(now);
+    osc.stop(now + 4.0);
   });
+  
+  // Distorted noise layer for gritty cinematic impact texture
+  const bufSize = Math.floor(audio.sampleRate * 2.0);
+  const buf = audio.createBuffer(1, bufSize, audio.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+  }
+  const noiseSrc = audio.createBufferSource();
+  noiseSrc.buffer = buf;
+  const noiseFilter = audio.createBiquadFilter();
+  noiseFilter.type = "lowpass";
+  noiseFilter.frequency.value = 600;
+  const noiseGain = audio.createGain();
+  noiseGain.gain.setValueAtTime(0.5, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+  noiseSrc.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(audio.destination);
+  noiseSrc.start(now);
 }
 
 /** Cooldown ticking — optional tick sound for "attack ready" moment. */
