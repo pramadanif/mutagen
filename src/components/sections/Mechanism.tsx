@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { MUTATION_IMAGES } from '@/lib/assets';
 import { MutationTierShowcase } from '@/components/ui/MutationTierShowcase';
+import { PixelSprite } from '@/components/ui/PixelSprite';
 
 const LOOT_ROWS = [
   { tier: 'COMMON' as const, label: 'COMMON', bars: '+++++---' },
@@ -16,19 +17,21 @@ export function Mechanism() {
         <h2 className="text-4xl font-bold font-header text-black">MECHANISM</h2>
         <p className="text-lg font-bold text-black mt-2 mb-3">(The Cycle)</p>
         <p className="text-base max-w-3xl leading-relaxed mb-4">
-          Four steps. Hub data feeds step 3 — loot odds rescale before every pull. Follow arrows:
-          bond tokens → trigger exposure → odds shift from Regime Score → mint Mutation NFT.
+          Six steps. Hub data feeds step 3 — loot odds rescale before every pull. Follow arrows:
+          bond tokens → trigger exposure → odds shift from Regime Score → mint Mutation NFT → merge into Specimen → fight Raid Boss.
         </p>
         <div className="flex flex-wrap gap-2 text-xs font-bold">
           <span className="bg-[#D0F0C0] border-2 border-black px-2 py-1">① Bond</span>
           <span className="bg-[#FFF3CD] border-2 border-black px-2 py-1">② Trigger</span>
           <span className="bg-[#E6E6FA] border-2 border-black px-2 py-1">③ Odds Rescale ← Hub</span>
           <span className="bg-[#F59E0B] border-2 border-black px-2 py-1">④ Mint NFT</span>
+          <span className="bg-[#8B5CF6] text-white border-2 border-black px-2 py-1">⑤ Merge Specimen</span>
+          <span className="bg-mutagen-red text-white border-2 border-black px-2 py-1">⑥ Raid Boss</span>
         </div>
       </div>
-      <div className="w-[1300px] mx-auto relative h-[900px] shrink-0">
+      <div className="w-[1300px] mx-auto relative h-[1200px] shrink-0">
         {/* SVG Arrows Layer */}
-        <svg viewBox="0 0 1300 900" className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+        <svg viewBox="0 0 1300 1200" className="absolute inset-0 w-full h-full z-0 pointer-events-none">
            {/* Define Arrow Styles */}
            <g fill="#D1CBB8" stroke="#000" strokeWidth="4">
              {/* 1 -> 2 */}
@@ -38,9 +41,13 @@ export function Mechanism() {
              {/* 1 -> Incubator */}
              <path d="M 190 380 L 190 660 L 310 660 L 310 650 L 330 670 L 310 690 L 310 680 L 210 680 L 210 380 Z" />
              {/* Incubator -> 4 */}
-             <path d="M 630 660 L 710 660 L 710 650 L 730 670 L 710 690 L 710 680 L 630 680 Z" />
+             <path d="M 600 660 L 650 660 L 650 650 L 670 670 L 650 690 L 650 680 L 600 680 Z" />
              {/* 4 -> 3 */}
-             <path d="M 790 560 L 790 470 L 780 470 L 800 450 L 820 470 L 810 470 L 810 560 Z" />
+             <path d="M 850 560 L 850 470 L 840 470 L 860 450 L 880 470 L 870 470 L 870 560 Z" />
+             {/* 4 -> 5 */}
+             <path d="M 840 780 L 840 860 L 830 860 L 850 880 L 870 860 L 860 860 L 860 780 Z" />
+             {/* 5 -> 6 */}
+             <path d="M 720 1010 L 630 1010 L 630 1000 L 610 1020 L 630 1040 L 630 1030 L 720 1030 Z" />
            </g>
 
            {/* Arrow Decors */}
@@ -48,8 +55,10 @@ export function Mechanism() {
              <path d="M 340 315 L 345 320 L 340 325 M 360 315 L 365 320 L 360 325 M 380 315 L 385 320 L 380 325" />
              <path d="M 640 315 L 645 320 L 640 325 M 655 315 L 660 320 L 655 325" />
              <path d="M 195 430 L 200 435 L 205 430 M 195 480 L 200 485 L 205 480 M 195 530 L 200 535 L 205 530 M 240 665 L 245 670 L 240 675 M 270 665 L 275 670 L 270 675" />
-             <path d="M 650 665 L 655 670 L 650 675 M 680 665 L 685 670 L 680 675" />
-             <path d="M 795 530 L 800 525 L 805 530 M 795 500 L 800 495 L 805 500" />
+             <path d="M 620 665 L 625 670 L 620 675 M 640 665 L 645 670 L 640 675" />
+             <path d="M 855 530 L 860 525 L 865 530 M 855 500 L 860 495 L 865 500" />
+             <path d="M 845 800 L 850 805 L 855 800 M 845 830 L 850 835 L 855 830" />
+             <path d="M 690 1015 L 685 1020 L 690 1025 M 660 1015 L 655 1020 L 660 1025" />
            </g>
 
            {/* Data Lines 3 -> Atom */}
@@ -127,7 +136,7 @@ export function Mechanism() {
         </div>
 
         {/* Node 4: Mint NFT */}
-        <div className="absolute z-10 flex flex-col items-center" style={{ left: '800px', top: '650px', transform: 'translate(-50%, -50%)' }}>
+        <div className="absolute z-10 flex flex-col items-center" style={{ left: '850px', top: '650px', transform: 'translate(-50%, -50%)' }}>
           <div className="text-center text-lg font-bold w-max mb-4 text-black">
             <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full mr-2 text-sm">4</span>
             Mint Mutation NFT
@@ -141,6 +150,34 @@ export function Mechanism() {
             Specialized<br/>data-antenna
           </div>
           <Image src="/antena.png" alt="Antenna" width={160} height={180} className="[image-rendering:pixelated] object-contain" />
+        </div>
+
+        {/* Node 5: Merge */}
+        <div className="absolute z-10 flex flex-col items-center w-64" style={{ left: '850px', top: '1020px', transform: 'translate(-50%, -50%)' }}>
+          <Image src="/specimen_v2.png" alt="Specimen" width={140} height={140} className="[image-rendering:pixelated] object-contain mb-4" />
+          <div className="bg-[#8B5CF6] border-4 border-black px-4 py-3 text-center text-lg font-bold shadow-[4px_4px_0_#000] w-full text-white">
+            <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full mr-2 text-sm border-2 border-white">5</span>
+            Merge into<br/>Specimen
+          </div>
+        </div>
+
+        {/* Node 6: Raid Boss */}
+        <div className="absolute z-10 flex flex-col items-center w-64" style={{ left: '480px', top: '1020px', transform: 'translate(-50%, -50%)' }}>
+          <div className="relative w-40 h-40 mb-4 flex justify-center items-center">
+            <PixelSprite
+              src="/sprites/boss-calm-idle.png"
+              frameW={341}
+              frameH={550}
+              offsetY={0}
+              totalFrames={3}
+              fps={3}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
+          <div className="bg-mutagen-red border-4 border-black px-4 py-3 text-center text-lg font-bold shadow-[4px_4px_0_#000] w-full text-white animate-pulse">
+            <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full mr-2 text-sm border-2 border-white">6</span>
+            Fight Global<br/>Raid Boss
+          </div>
         </div>
 
       </div>
