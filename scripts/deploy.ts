@@ -40,18 +40,9 @@ async function main() {
   const uploadFee = calculateFee(3_000_000, gasPrice);
 
   const wasm = readFileSync(WASM_PATH);
-  console.log("Uploading WASM...", wasm.length, "bytes");
-  const upload = await client.upload(
-    account.address,
-    wasm,
-    uploadFee,
-    "MUTAGEN upload",
-    {
-      permission: AccessType.ACCESS_TYPE_EVERYBODY,
-      addresses: [],
-    }
-  );
-  console.log("Code ID:", upload.codeId, "tx:", upload.transactionHash);
+  console.log("Using existing Code ID 522 instead of re-uploading...");
+  const upload = { codeId: 522, transactionHash: "14D49E90F2171E96C100BE7BAC1E2A2017A60E422C0DC5131684ADE5DF004612" };
+
 
   const initMsg = { relayer: RELAYER };
   const instantiateFee = calculateFee(500_000, gasPrice);

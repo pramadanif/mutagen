@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
 import { useChain } from "@cosmos-kit/react";
 import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import {
@@ -15,24 +14,20 @@ import {
 import { getHubPulse } from "@/lib/experiment-store";
 import { getRegimeLabel, getRegimeColor } from "@/lib/loot-table";
 import { PixelButton } from "@/components/ui/PixelButton";
+import { PixelSprite } from "@/components/ui/PixelSprite";
 import { BossHpBar } from "@/components/raid/BossHpBar";
 import { DamageNumber } from "@/components/raid/DamageNumber";
 import {
   playAttackHitSound,
   playBossHitReactionSound,
   playBossDefeatedSound,
-  playReadySound,
 } from "@/lib/raid-sounds";
 import type { BossState, LeaderboardEntry, Specimen } from "@/lib/types";
 
-const ATTACK_COOLDOWN_SECS = 300; // must match contract constant
+const ATTACK_COOLDOWN_SECS = 300;
 
-// ─── Boss sprite selection ────────────────────────────────────────────────────
-function getBossSprite(regimeScore: number): string {
-  if (regimeScore <= 30) return "/sprites/boss-calm.png";
-  if (regimeScore <= 60) return "/sprites/boss-elevated.png";
-  return "/sprites/boss-turbulent.png";
-}
+
+
 
 // ─── Cooldown hook ────────────────────────────────────────────────────────────
 function useCooldownTimer(lastAttackAtSecs: number | null): number {
@@ -303,7 +298,16 @@ export function RaidPage() {
     }
   }, [address, getOfflineSigner, isWalletConnected, leaderboard]);
 
-  const bossSprite = getBossSprite(hubPulse.regimeScore);
+  // Select boss sprite based on regime score
+  const regimeScore = hubPulse.regimeScore;
+  const regimeLabel = getRegimeLabel(regimeScore);
+  const bossSpriteConfig =
+    regimeScore <= 30
+      ? { src: "/sprites/boss-calm-idle.png", frameH: 550, offsetY: 0 }
+      : regimeScore <= 60
+      ? { src: "/sprites/boss-elevated-idle.png", frameH: 550, offsetY: 245 }
+      : { src: "/sprites/boss-turbulent-idle.png", frameH: 550, offsetY: 150 };
+
   const myEntry = leaderboard.find((e) => e.player === address);
   const canClaim = boss?.defeated && myEntry && myEntry.damage > 0 && !myEntry.claimed;
 
@@ -312,8 +316,8 @@ export function RaidPage() {
   const attackReady = selectedSp && selectedCd === 0 && !boss?.defeated;
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8 font-pixel">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="w-full min-h-[calc(100vh-72px)] flex flex-col p-4 md:p-6 font-pixel">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4 shrink-0">
         <div>
           <h1 className="font-header text-2xl md:text-3xl">RAID BOSS</h1>
           <p className="text-lg mt-2 opacity-70">Cooperative boss fight — coordinate with other players.</p>
@@ -321,30 +325,33 @@ export function RaidPage() {
         <PhaseTag score={hubPulse.regimeScore} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px_260px] gap-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px_320px] xl:grid-cols-[1fr_380px_380px] gap-6 min-h-0">
 
         {/* ── Boss Arena ── */}
-        <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-          <div className="p-4 border-b-4 border-black font-header text-sm">THE CONSTRUCT</div>
-          <div className="p-6 flex flex-col items-center gap-6">
+        <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] flex flex-col">
+          <div className="p-4 border-b-4 border-black font-header text-sm shrink-0">THE CONSTRUCT</div>
+          <div className="p-6 flex flex-col items-center justify-center flex-1 gap-6 overflow-y-auto">
 
-            {/* Boss sprite */}
-            <div className="relative">
-              <div
-                className={`transition-transform ${bossFlash ? "scale-95 brightness-[3]" : ""}`}
-                style={{ transition: bossFlash ? "none" : "all 0.2s" }}
+          {/* Boss sprite — animated using PixelSprite */}
+            <div className="relative flex justify-center w-full max-w-[400px] aspect-square items-center">
+              <div 
+                className={`transition-all ${bossFlash ? "brightness-[3] saturate-0" : ""}`}
+                style={{
+                   filter: boss?.defeated
+                      ? "grayscale(1) brightness(0.4)"
+                      : `drop-shadow(0 0 24px ${regimeLabel === "TURBULENT" ? "#FF0000" : regimeLabel === "ELEVATED" ? "#FFBD2E" : "#39FF14"})`,
+                   transition: bossFlash ? "none" : "filter 0.2s"
+                }}
               >
-                <Image
-                  src={bossSprite}
-                  alt="Raid Boss"
-                  width={384}
-                  height={144}
-                  className="[image-rendering:pixelated] object-contain"
-                  style={{
-                    filter: boss?.defeated
-                      ? "grayscale(1) brightness(0.5)"
-                      : `drop-shadow(0 0 16px ${getRegimeColor(hubPulse.regimeScore)})`,
-                  }}
+                <PixelSprite
+                  src={bossSpriteConfig.src}
+                  frameW={341}
+                  frameH={bossSpriteConfig.frameH}
+                  offsetY={bossSpriteConfig.offsetY}
+                  totalFrames={3}
+                  fps={3}
+                  className="mx-auto"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
                 />
               </div>
 
@@ -352,7 +359,7 @@ export function RaidPage() {
               {showDamage && lastDamage !== null && (
                 <DamageNumber
                   damage={lastDamage}
-                  isCrit={selectedSp?.archetype === "Pure" && hubPulse.regimeScore > 60}
+                  isCrit={selectedSp?.archetype === "Pure" && regimeScore > 60}
                   onComplete={() => setShowDamage(false)}
                 />
               )}
@@ -376,7 +383,7 @@ export function RaidPage() {
             )}
 
             {/* Regime phase indicator */}
-            <div className="w-full max-w-md bg-black border-4 border-black p-3">
+            <div className="w-full max-w-md bg-black border-4 border-black p-3 shrink-0">
               <div className="font-header text-xs mb-2" style={{ color: getRegimeColor(hubPulse.regimeScore) }}>
                 CURRENT PHASE: {getRegimeLabel(hubPulse.regimeScore)}
               </div>
@@ -389,6 +396,34 @@ export function RaidPage() {
               </p>
             </div>
 
+            {/* Phase Guide showing other boss animations */}
+            <div className="w-full max-w-md mt-2 shrink-0">
+              <div className="font-header text-[0.65rem] mb-2 text-center opacity-80">BOSS PHASE GUIDE</div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { name: "CALM", src: "/sprites/boss-calm-idle.png", color: "#39FF14", desc: "Pure: -30%", h: 550, oy: 0 },
+                  { name: "ELEVATED", src: "/sprites/boss-elevated-idle.png", color: "#FFBD2E", desc: "Neutral", h: 550, oy: 245 },
+                  { name: "TURBULENT", src: "/sprites/boss-turbulent-idle.png", color: "#FF0000", desc: "Pure: +30%", h: 550, oy: 150 },
+                ].map((p) => (
+                  <div key={p.name} className={`flex flex-col items-center bg-white border-2 border-black p-1.5 ${p.name === regimeLabel ? 'ring-2 ring-black bg-[#EAE4D5]' : 'opacity-60 grayscale-[0.5]'}`}>
+                    <div className="h-14 w-full flex items-center justify-center mb-1">
+                      <PixelSprite
+                        src={p.src}
+                        frameW={341}
+                        frameH={p.h}
+                        offsetY={p.oy}
+                        totalFrames={3}
+                        fps={3}
+                        style={{ height: "100%", width: "auto", objectFit: "contain", filter: `drop-shadow(0 0 8px ${p.color})` }}
+                      />
+                    </div>
+                    <div className="text-[0.55rem] font-header" style={{ color: p.color }}>{p.name}</div>
+                    <div className="text-[0.5rem] font-pixel text-center mt-0.5 opacity-80">{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {txHash && (
               <div className="w-full max-w-md bg-black border-4 border-[#333] p-3 font-mono text-xs text-[#27C93F] break-all">
                 <span className="text-[#FF5F56]">tx&gt; </span>{txHash}
@@ -398,10 +433,10 @@ export function RaidPage() {
         </div>
 
         {/* ── Attack Controls ── */}
-        <div className="space-y-4">
-          <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-            <div className="p-4 border-b-4 border-black font-header text-sm">YOUR SPECIMENS</div>
-            <div className="p-4 space-y-3">
+        <div className="flex flex-col gap-4">
+          <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] flex flex-col flex-1 min-h-0">
+            <div className="p-4 border-b-4 border-black font-header text-sm shrink-0">YOUR SPECIMENS</div>
+            <div className="p-4 space-y-3 overflow-y-auto flex-1">
               {!isWalletConnected ? (
                 <p className="text-sm opacity-60">Connect wallet to load specimens.</p>
               ) : specimens.length === 0 ? (
@@ -463,11 +498,11 @@ export function RaidPage() {
         </div>
 
         {/* ── Leaderboard ── */}
-        <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-          <div className="p-4 border-b-4 border-black font-header text-sm">
+        <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] flex flex-col min-h-0">
+          <div className="p-4 border-b-4 border-black font-header text-sm shrink-0">
             DAMAGE LEADERBOARD
           </div>
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto flex-1">
             {leaderboard.length === 0 ? (
               <p className="text-sm opacity-60 py-4 text-center">No attacks yet.</p>
             ) : (

@@ -168,8 +168,8 @@ fn query_leaderboard(deps: Deps) -> StdResult<LeaderboardResponse> {
                 // Only include players whose epoch matches the current boss life
                 let player_epoch = PLAYER_CLAIM_EPOCH
                     .may_load(deps.storage, &addr)
-                    .ok()??
-                    ;
+                    .unwrap_or(None)
+                    .unwrap_or(0);
                 if player_epoch != epoch {
                     return None;
                 }

@@ -1,10 +1,10 @@
 {
   "chainId": "provider",
-  "rpc": "https://rpc.provider-sentry-02.ics-testnet.polypore.xyz",
-  "codeId": 514,
-  "contractAddress": "cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g",
+  "rpc": "https://rpc.provider-sentry-01.ics-testnet.polypore.xyz",
+  "codeId": 524,
+  "contractAddress": "cosmos10drgaq032vgtfrmul6cfwnnlgj7nt3qps6nw07f3wvpyzl4jdx5s7jw4l0",
   "relayer": "cosmos18tl6csmj6meh3t4u5zpvkjd78un4mwf6sz27kr",
-  "deployedAt": "2026-06-22T16:18:26.989Z",
-  "uploadTx": "A931945E0050FFFC872F90CE820152A01C599439C219CDB76330DE5DB15F3753",
-  "instantiateTx": "8ED92D1C339F8394A8A608DDAFC61F64F489F32E7B184CEE8B115F72A7358C9D"
+  "deployedAt": "2026-06-25T11:59:57.971Z",
+  "uploadTx": "C4000DE10331A4882DC7DF9DD6CB283FC0F4285A542782CE066A074A960950C0",
+  "instantiateTx": "1B745F7480A89699EC2B147B2678A75027AB7F7C7228AB03EF647999B9E5D16E"
 }

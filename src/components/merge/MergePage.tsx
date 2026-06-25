@@ -143,25 +143,24 @@ export function MergePage() {
   const archetypeColors = preview ? (ARCHETYPE_COLORS[preview.archetype] ?? ARCHETYPE_COLORS.Hybrid) : null;
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8 font-pixel">
-      <div className="mb-6">
+    <div className="w-full min-h-[calc(100vh-72px)] flex flex-col p-4 md:p-6 font-pixel">
+      <div className="mb-4 shrink-0">
         <h1 className="font-header text-2xl md:text-3xl">MERGE LAB</h1>
         <p className="text-lg mt-2 opacity-70">
           Combine 4 Mutation NFTs → one Specimen. Archetype determines phase sensitivity.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6 min-h-0">
         {/* Left: Mutation Gallery */}
-        <div>
-          <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] mb-4">
-            <div className="p-4 border-b-4 border-black font-header text-sm">
-              YOUR MUTATIONS
-              <span className="ml-3 text-xs opacity-60">
-                (click to select — need exactly 4)
-              </span>
-            </div>
-            <div className="p-4">
+        <div className="flex flex-col bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] min-h-0">
+          <div className="p-4 border-b-4 border-black font-header text-sm shrink-0">
+            YOUR MUTATIONS
+            <span className="ml-3 text-xs opacity-60">
+              (click to select — need exactly 4)
+            </span>
+          </div>
+          <div className="p-4 flex-1 overflow-y-auto">
               {!isWalletConnected ? (
                 <p className="text-center opacity-60 py-8">Connect wallet to see your mutations.</p>
               ) : loading ? (
@@ -213,12 +212,11 @@ export function MergePage() {
               )}
             </div>
           </div>
-        </div>
 
         {/* Right: Selection + Preview */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 overflow-y-auto min-h-0 pb-4">
           {/* Selection slots */}
-          <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
+          <div className="bg-[#EAE4D5] border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] shrink-0">
             <div className="p-4 border-b-4 border-black font-header text-sm">
               MERGE SELECTION ({selected.filter(Boolean).length}/4)
             </div>

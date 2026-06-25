@@ -12,13 +12,17 @@ interface PixelSpriteProps {
   totalFrames: number;
   /** Frames per second */
   fps?: number;
-  /** Scale factor applied via CSS (nearest-neighbor) */
+  /** Scale factor applied via CSS (nearest-neighbor). Optional. */
   scale?: number;
   className?: string;
   /** Row index (0-based) for vertical sprite sheets */
   row?: number;
   /** Number of frames in this animation row (defaults to totalFrames) */
   rowFrames?: number;
+  /** Optional vertical offset in pixels (for sprites not starting at y=0) */
+  offsetY?: number;
+  /** Optional inline styles */
+  style?: React.CSSProperties;
 }
 
 /**
@@ -32,10 +36,12 @@ export function PixelSprite({
   frameH,
   totalFrames,
   fps = 8,
-  scale = 2,
+  scale,
   className = "",
   row = 0,
   rowFrames,
+  offsetY = 0,
+  style,
 }: PixelSpriteProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
@@ -68,7 +74,7 @@ export function PixelSprite({
         ctx.drawImage(
           img,
           frameRef.current * frameW, // sx: horizontal frame offset
-          row * frameH,               // sy: vertical row offset
+          (row * frameH) + offsetY,  // sy: vertical row offset + custom offset
           frameW,
           frameH,
           0,
@@ -82,7 +88,7 @@ export function PixelSprite({
 
     img.onload = () => {
       // Draw first frame immediately
-      ctx.drawImage(img, 0, row * frameH, frameW, frameH, 0, 0, frameW, frameH);
+      ctx.drawImage(img, 0, (row * frameH) + offsetY, frameW, frameH, 0, 0, frameW, frameH);
       rafRef.current = requestAnimationFrame(draw);
     };
 
@@ -98,9 +104,9 @@ export function PixelSprite({
       height={frameH}
       className={className}
       style={{
-        width: frameW * scale,
-        height: frameH * scale,
+        ...(scale ? { width: frameW * scale, height: frameH * scale } : {}),
         imageRendering: "pixelated",
+        ...style,
       }}
     />
   );
