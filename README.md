@@ -1,14 +1,14 @@
 # MUTAGEN
 
-> **A bonding-curve gacha where the loot table is reshaped live by real Cosmos Hub activity — and policed by an onchain fairness auditor.**
+> **A bonding-curve gacha where the loot table is reshaped live by real Cosmos Hub activity — merge Specimens, raid a shared Boss, and trust an onchain fairness auditor.**
 
 Built for the **Mad Easy on Cosmos** builder sprint (Mad Scientists × Cosmos Labs × Odin Scan).
 
 | | |
 |---|---|
-| **Live demo** | [deployment.md](./deployment.md) — Vercel + `https://mutagen.pramadani.site` |
+| **Live demo** | **[https://mutagen-chi.vercel.app](https://mutagen-chi.vercel.app/)** · [deployment.md](./deployment.md) |
 | **Chain** | Cosmos ICS Provider testnet (`provider`) |
-| **Contract** | `cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g` |
+| **Contract** | `cosmos10drgaq032vgtfrmul6cfwnnlgj7nt3qps6nw07f3wvpyzl4jdx5s7jw4l0` |
 | **Architecture diagrams** | [mermaid.md](./mermaid.md) |
 
 ---
@@ -38,24 +38,27 @@ Built for the **Mad Easy on Cosmos** builder sprint (Mad Scientists × Cosmos La
 21. [Verification & testing](#verification--testing)
 22. [Deployed testnet manifest](#deployed-testnet-manifest)
 23. [Odin Scan parallel](#odin-scan-parallel)
-24. [Known limitations](#known-limitations)
-25. [Troubleshooting](#troubleshooting)
-26. [License](#license)
+24. [Merge Lab](#merge-lab)
+25. [Raid Boss](#raid-boss)
+26. [Known limitations](#known-limitations)
+27. [Troubleshooting](#troubleshooting)
+28. [License](#license)
 
 ---
 
 ## What is MUTAGEN?
 
-MUTAGEN is a **reflexive gacha** experiment on Cosmos:
+MUTAGEN is a **reflexive gacha + cooperative raid** experiment on Cosmos:
 
 1. **Bond** testnet ATOM into the incubator curve.
 2. **Trigger a Mutagen Exposure** — a weighted random pull from a live loot table.
 3. **Receive** a Mutation outcome (COMMON → LEGENDARY) with an on-chain payout multiplier.
 4. **Watch** the odds shift as real Hub macro signals change the **Volatility Regime Score**.
 5. **Trust** the system through a transparent dashboard: payout histogram, Hub Pulse feed, Zero-Sum Index gauge, and append-only Lab Notebook.
+6. **Merge** four owned Experiments into a battle-ready **Specimen** with a computed Archetype and Power score.
+7. **Raid** a shared on-chain Boss — cooperative damage, regime-sensitive combat, and proportional rewards.
 
-Every pull is logged permanently on-chain as an **Experiment** entry — literalizing Mad Scientists’ *“Everything is an experiment.”*
-
+Every pull is logged permanently on-chain as an **Experiment** entry. Specimens and Boss damage are fully on-chain too — *everything is an experiment.*
 ---
 
 ## Why Cosmos Hub matters here
@@ -83,9 +86,13 @@ Connect wallet → Enter bond amount (uatom) → TRIGGER EXPOSURE
     → [2] trigger_exposure{} tx draws tier, pays out, logs experiment
     → UI reveal animation + relayer experiment POST
     → Dashboard / Notebook update from chain + relayer sync
+
+Collect 4 Experiments → MERGE LAB → merge_specimen{} → Specimen NFT
+    → Select Specimen → RAID BOSS → attack_boss{} → shared HP pool drops
+    → Boss defeated → claim_reward{} proportional to damage share
 ```
 
-**Two-step on-chain flow** (by design):
+**Two-step exposure flow** (by design):
 
 - `Bond` stores a per-player pending bond (prevents double-spend of the same funds).
 - `TriggerExposure` consumes the pending bond, runs the draw, sends payout, appends the experiment ledger entry.
@@ -125,9 +132,9 @@ flowchart TB
 
 | Component | Role |
 |-----------|------|
-| **Frontend** (`src/`) | Wallet UX, Lab pull UI, live dashboard, notebook, mutations gallery |
+| **Frontend** (`src/`) | Wallet UX, Lab pull UI, Merge Lab, Raid Boss, live dashboard, notebook, mutations gallery |
 | **Relayer** (`relayer/`) | Hub feature ingestion, Regime Classifier, regime tx submission, REST API for Hub Pulse + off-chain auditor mirror |
-| **CosmWasm contract** (`mutagen-contract/`) | Bonding, deterministic draws, loot table state, on-chain auditor, experiment ledger, native staking bonus query |
+| **CosmWasm contract** (`mutagen-contract/`) | Bonding, draws, loot table, auditor, experiment ledger, Specimen merge, Boss raid, native staking bonus query |
 | **Deploy manifest** (`public/contract.json`) | Canonical testnet addresses consumed by frontend + scripts |
 
 ---
@@ -173,20 +180,23 @@ Both AI pieces are **load-bearing but bounded** — they fire on schedule or thr
 ```text
 mutagen/
 ├── src/                          # Next.js application
-│   ├── app/                      # Routes: /, /lab, /dashboard, /notebook, /mutations, /how-it-works
+│   ├── app/                      # Routes: /, /lab, /dashboard, /notebook, /mutations, /merge, /raid, /how-it-works
 │   ├── components/
 │   │   ├── lab/                  # LabPage, IncubatorStage, RegimeGauge, HubPulsePanel, …
+│   │   ├── merge/                # MergePage — 4-slot selection, live Specimen preview
+│   │   ├── raid/                 # RaidPage, BossHpBar, DamageNumber — cooperative Boss fight
 │   │   ├── dashboard/            # Live histogram, Zero-Sum gauge, Monte Carlo preseed
 │   │   ├── notebook/             # On-chain experiment ledger view
 │   │   ├── mutations/            # Wallet mutation collection
 │   │   ├── sections/             # Landing page sections
 │   │   └── providers/            # WalletProvider, RelayerSync
 │   └── lib/
-│       ├── contract.ts           # CosmJS bond / pull / query helpers
+│       ├── contract.ts           # CosmJS bond / pull / merge / raid / query helpers
 │       ├── relayer-client.ts     # Relayer HTTP client
 │       ├── experiment-store.ts   # Client-side live state bus
 │       ├── loot-table.ts         # Frontend odds preview (mirrors contract logic)
-│       └── lab-sounds.ts         # Pull SFX engine
+│       ├── lab-sounds.ts         # Pull SFX engine
+│       └── raid-sounds.ts        # Merge + raid SFX engine
 ├── relayer/                      # Hub oracle + REST API
 │   └── src/
 │       ├── hub/                  # bonded-ratio, gov-activity, ibc-volume fetchers
@@ -195,7 +205,7 @@ mutagen/
 │       ├── oracle.ts             # Main oracle loop
 │       └── server.ts             # Express routes
 ├── mutagen-contract/             # CosmWasm Rust crate
-│   ├── src/                      # execute, query, loot, auditor, state
+│   ├── src/                      # execute, query, loot, auditor, specimen, state
 │   └── artifacts/                # Compiled .wasm (after Docker build)
 ├── scripts/
 │   ├── deploy.ts                 # Upload + instantiate + seed contract
@@ -277,7 +287,7 @@ npm run build                    # Production build check
 ```env
 NEXT_PUBLIC_RPC_URL=https://rpc.provider-sentry-02.ics-testnet.polypore.xyz
 NEXT_PUBLIC_REST_URL=https://rest.provider-sentry-02.ics-testnet.polypore.xyz
-NEXT_PUBLIC_CONTRACT_ADDRESS=cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g
+NEXT_PUBLIC_CONTRACT_ADDRESS=cosmos10drgaq032vgtfrmul6cfwnnlgj7nt3qps6nw07f3wvpyzl4jdx5s7jw4l0
 NEXT_PUBLIC_RELAYER_URL=http://localhost:3091
 ```
 
@@ -295,7 +305,7 @@ PORT=3091
 RPC_URL=https://rpc.provider-sentry-02.ics-testnet.polypore.xyz
 REST_URL=https://rest.cosmos.directory/cosmoshub
 INTERVAL_MS=300000
-CONTRACT_ADDRESS=cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g
+CONTRACT_ADDRESS=cosmos10drgaq032vgtfrmul6cfwnnlgj7nt3qps6nw07f3wvpyzl4jdx5s7jw4l0
 MNEMONIC="your relayer wallet mnemonic — NEVER commit this"
 AUDITOR_K=10
 GINI_THRESHOLD=0.6
@@ -407,6 +417,10 @@ This script:
 | `TriggerExposure {}` | Player | Draws tier, pays out, logs experiment |
 | `UpdateRegimeScore { score, bonded_delta, gov_delta, ibc_delta }` | Relayer only | Rescales loot table |
 | `RunAudit {}` | Relayer only | Manual on-chain audit trigger |
+| `MergeSpecimen { experiment_ids }` | Player | Burns 4 owned Experiments → mints one Specimen |
+| `AttackBoss { specimen_id }` | Player | Deals regime-modified damage to shared Boss (5-min cooldown per Specimen) |
+| `ClaimReward {}` | Player | Claims proportional reward credits after Boss defeat |
+| `RespawnBoss { new_hp }` | Relayer / owner | Resets Boss HP for the next raid round |
 
 ### Query messages
 
@@ -419,6 +433,10 @@ This script:
 | `ListExperiments { limit }` | Append-only experiment ledger |
 | `CheckResonanceBonus { address }` | Staking bonus status |
 | `GetPlayerExperiments { player }` | Per-wallet history |
+| `GetBossState {}` | Shared Boss HP, defeat status, respawn count |
+| `GetLeaderboard {}` | Per-player damage ledger + reward shares |
+| `GetPlayerSpecimens { player }` | Wallet's merged Specimens |
+| `GetSpecimen { id }` | Single Specimen by ID |
 
 ### Payout formula (on-chain)
 
@@ -472,6 +490,13 @@ const loot = await queryLootTable();
 const auditor = await queryAuditorState();
 const exps = await queryListExperiments(50);
 const resonance = await queryResonanceBonus(address);
+
+// Raid Boss milestone
+await mergeSpecimen(client, address, [1, 2, 3, 4]);
+const attack = await attackBoss(client, address, specimenId);
+await claimReward(client, address);
+const boss = await queryBossState();
+const specimens = await queryPlayerSpecimens(address);
 ```
 
 ---
@@ -485,6 +510,8 @@ const resonance = await queryResonanceBonus(address);
 | `/dashboard` | `LiveDashboardPage` | Payout histogram (Monte Carlo preseed), Zero-Sum gauge, Hub Pulse |
 | `/notebook` | `LabNotebookPage` | Public experiment ledger |
 | `/mutations` | `MyMutationsPage` | Connected wallet's pull history / tiers |
+| `/merge` | `MergePage` | Select 4 Experiments, live Archetype + Power preview, confirm merge |
+| `/raid` | `RaidPage` | Shared Boss HP bar, phase-variant sprite, attack cooldowns, leaderboard, defeat modal |
 | `/how-it-works` | `HowItWorksPage` | Judge-facing mechanic explainer |
 
 ---
@@ -555,10 +582,11 @@ From `public/contract.json`:
 | Field | Value |
 |-------|-------|
 | Chain ID | `provider` |
-| Code ID | `514` |
-| Contract | `cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g` |
+| Code ID | `524` |
+| Contract | `cosmos10drgaq032vgtfrmul6cfwnnlgj7nt3qps6nw07f3wvpyzl4jdx5s7jw4l0` |
 | Relayer wallet | `cosmos18tl6csmj6meh3t4u5zpvkjd78un4mwf6sz27kr` |
-| RPC | `https://rpc.provider-sentry-02.ics-testnet.polypore.xyz` |
+| RPC | `https://rpc.provider-sentry-01.ics-testnet.polypore.xyz` |
+| Deployed | 25 Jun 2026 (Raid Boss contract) |
 
 ---
 
@@ -573,6 +601,80 @@ Both are: infrequent relative to user actions, threshold-triggered, logged with 
 
 ---
 
+## Merge Lab
+
+**Route:** [`/merge`](https://mutagen-chi.vercel.app/merge) · **Contract message:** `MergeSpecimen { experiment_ids: [u64; 4] }`
+
+After collecting Experiments from The Lab, players merge **exactly four owned Experiments** into one **Specimen** — a battle unit stored on-chain with computed Archetype, tier label, and Power.
+
+### How merge works
+
+1. Open **Merge Lab** and pick 4 Experiments from your wallet (`/mutations` shows your collection).
+2. The UI previews **Archetype** and **Power** live (mirrors `mutagen-contract/src/specimen.rs`).
+3. Confirm → `merge_specimen{}` tx burns the 4 Experiments and mints one Specimen NFT.
+4. Use the Specimen in **Raid Boss**.
+
+### Archetypes (tier composition)
+
+| Archetype | Composition | Raw power modifier | Phase sensitivity |
+|-----------|-------------|--------------------|-------------------|
+| **Pure** | 4× same tier | ×1.30 (highest ceiling) | −30% in CALM, +30% in TURBULENT |
+| **Balanced** | 2+2 matching pairs | ×1.00 | Neutral in all phases |
+| **Hybrid** | 3+1 or all different | ×0.85 (lowest raw) | Immune to phase penalties |
+
+Tier base power: COMMON 100 · RARE 200 · EPIC 400 · LEGENDARY 800 (summed across all 4 inputs).
+
+### UI & assets
+
+- `MergePage` — 4-slot gallery, live preview, inline phase cheat-sheet.
+- Original pixel Specimen sprites (Pure / Balanced / Hybrid) with idle + attack frames.
+- Merge SFX via `src/lib/raid-sounds.ts` (Web Audio API).
+
+---
+
+## Raid Boss
+
+**Route:** [`/raid`](https://mutagen-chi.vercel.app/raid) · **Contract messages:** `AttackBoss`, `ClaimReward`, `RespawnBoss`
+
+Raid Boss adds a **cooperative social-coordination layer** on top of the gacha loop. One shared Boss with a public HP pool lives on-chain; all players attack the same target and compete on a global damage leaderboard.
+
+### How raid works
+
+1. Own at least one **Specimen** (from Merge Lab).
+2. Open **Raid Boss** — live HP bar, Boss sprite variant matches current Hub regime phase.
+3. Select a Specimen → **Attack Boss** → `attack_boss{}` deals regime-modified damage.
+4. Each Specimen has a **5-minute attack cooldown** (`ATTACK_COOLDOWN_SECS` in contract).
+5. When HP hits zero: `BossDefeated` event fires, damage ledger locks, players **Claim Reward** proportional to contribution share.
+6. Relayer / owner calls `respawn_boss{}` to start the next round (default **10,000 HP**).
+
+### Damage formula (Power × Archetype × Phase)
+
+Implemented in `mutagen-contract/src/specimen.rs` with **25 unit tests**:
+
+| Phase (regime score) | Pure | Balanced | Hybrid |
+|----------------------|------|----------|--------|
+| CALM (0–30) | −30% | 0% | 0% |
+| ELEVATED (31–60) | 0% | 0% | 0% |
+| TURBULENT (61–100) | +30% | 0% | 0% |
+
+**Design intent:** optimal Specimen depends on the active Volatility Regime — the same Hub signals that reshape gacha odds also reshape raid damage. Pure is high-variance; Hybrid is the safe pick in CALM.
+
+### On-chain queries
+
+| Query | Use |
+|-------|-----|
+| `GetBossState {}` | HP, defeat flag, respawn count |
+| `GetLeaderboard {}` | Per-player damage, share (bps), reward credits |
+| `GetPlayerSpecimens { player }` | Wallet Specimens + cooldown state |
+
+### UI & assets
+
+- `RaidPage` — segmented `BossHpBar`, floating `DamageNumber`, cooldown timers, defeat modal.
+- Boss sprite: Stone Golem Construct with **CALM** (green sigils), **ELEVATED** (gold aura), **TURBULENT** (red lightning) variants.
+- Raid SFX: attack hit, boss reaction, defeat fanfare (`src/lib/raid-sounds.ts`).
+
+---
+
 ## Known limitations
 
 1. **NFT / $LAB resonance** — UI badges exist; on-chain checks return `false` (stretch feature).
@@ -580,6 +682,8 @@ Both are: infrequent relative to user actions, threshold-triggered, logged with 
 3. **Relayer Hub REST** — must point to Cosmos Hub LCD (`rest.cosmos.directory/cosmoshub`); contract txs use provider testnet RPC.
 4. **IBC volume** — sampled via `tx_search` heuristics over ~600 blocks; not a full packet indexer.
 5. **Monte Carlo preseed** — client-side simulation for dashboard; separate from on-chain randomness.
+6. **Boss respawn** — `RespawnBoss` is relayer/owner-only; not yet scheduled automatically by the oracle.
+7. **Raid rewards** — reward credits are on-chain ledger entries; bank payout wiring may require contract funding for live ATOM claims.
 
 ---
 
@@ -624,6 +728,7 @@ This project was built for the Mad Easy on Cosmos hackathon. See repository for 
 ## Further reading
 
 - [deployment.md](./deployment.md) — Production deploy (Vercel + VPS `mutagen.pramadani.site`)
+- **Live app:** [https://mutagen-chi.vercel.app](https://mutagen-chi.vercel.app/)
 - [mermaid.md](./mermaid.md) — Full architecture diagrams
 - [context.md](./context.md) — Hackathon context, judge personas, product spec
 - [prompt.md](./prompt.md) — Complete build specification used for agent-driven development
@@ -632,77 +737,4 @@ This project was built for the Mad Easy on Cosmos hackathon. See repository for 
 ---
 
 **MUTAGEN** — *Everything is an experiment.*
-
----
-
-## Roadmap / Next Milestone — Raid Boss
-
-> **⚠️ POST-SUBMISSION WORK — NOT PART OF THE JUDGED ENTRY**
->
-> The following feature was designed and built **after** the Mad Easy on Cosmos submission deadline (22 Jun 2026 17:00 UTC). It lives entirely on the `feature/raid-boss` branch and has **never been merged** into the `main` branch that was submitted for judging.
->
-> Built: **25 Jun 2026** · Branch: `feature/raid-boss`
-
-### What was built
-
-The Raid Boss milestone adds a cooperative social-coordination layer on top of the existing MUTAGEN core loop, directly addressing the "social coordination games" angle in the hackathon brief.
-
-#### 1. Merge Lab (`/merge`)
-
-- Players select exactly 4 owned Mutation NFTs (Experiments) and merge them into a **Specimen**.
-- Archetype is determined by tier composition:
-  - **Pure** — 4 of the same tier: high raw power, phase-sensitive
-  - **Balanced** — 2+2 matching pairs: moderate power, phase-neutral
-  - **Hybrid** — all 4 different tiers: lowest raw power, fully phase-immune
-- Live preview shows computed Archetype and Power before confirming.
-- Phase modifier cheat-sheet displayed inline.
-
-#### 2. Raid Boss (`/raid`)
-
-- One shared on-chain Boss with a public HP pool.
-- `AttackBoss` message computes damage via the Power × Archetype × Phase formula.
-- Per-Specimen 5-minute attack cooldown (configurable) — prevents solo spam.
-- On Boss defeat: `BossDefeated` event, per-player damage ledger, `ClaimReward` proportional to contribution share.
-- `RespawnBoss` (relayer/owner only) resets the Boss for the next round.
-
-#### 3. Power / Archetype / Phase formula
-
-Implemented in `mutagen-contract/src/specimen.rs` with **25 passing unit tests** covering every archetype × phase combination:
-
-| Phase | Pure | Balanced | Hybrid |
-|-------|------|----------|--------|
-| CALM (0–30) | −30% | 0% | 0% |
-| ELEVATED (31–60) | 0% | 0% | 0% |
-| TURBULENT (61–100) | +30% | 0% | 0% |
-
-Net design effect: optimal Specimen depends on which regime is active — tying the new mechanic directly into the Hub-data-driven system at MUTAGEN's core.
-
-#### 4. Pixel art sprites
-
-All original pixel art, brand-palette (`#F2F2F2` / `#000000` / `#39FF14` / `#FFBD2E` / `#FF5F56`), no blur:
-
-- **Specimen sprites:** Pure (crystalline spikes), Balanced (dual-blade), Hybrid (asymmetric blob) — each with idle + attack frames.
-- **Boss sprites (3 phase variants):** Stone Golem Construct with CALM (green sigils), ELEVATED (gold aura), and TURBULENT (red lightning) variants — each with idle, hit-reaction, and defeat animations.
-
-No third-party art assets used. All sprites are original works generated for this project.
-
-#### 5. New pages & components
-
-| Route | Component |
-|-------|-----------|
-| `/merge` | `MergePage` — NFT gallery, 4-slot selection, live preview |
-| `/raid` | `RaidPage` — live HP bar, phase-variant Boss, cooldown timer, leaderboard, defeat modal |
-
-New UI components: `PixelSprite` (canvas animator), `BossHpBar` (segmented pixel bar), `DamageNumber` (floating feedback).
-
-New sound effects in `src/lib/raid-sounds.ts`: attack hit, boss reaction, defeat fanfare, merge complete — all using the existing Web Audio engine.
-
-### What's next (beyond this milestone)
-
-- Full testnet deployment with a new contract address.
-- Multi-player coordination testing with multiple wallets.
-- Boss respawn scheduling via the relayer oracle.
-- Boss difficulty scaling on respawn.
-
----
 
