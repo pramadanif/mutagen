@@ -11,9 +11,12 @@ use crate::auditor::maybe_run_audit;
 use crate::error::ContractError;
 use crate::loot::{apply_resonance_bonus, draw_tier, rescale_loot_table};
 use crate::msg::ExecuteMsg;
+use crate::specimen::{compute_archetype, compute_power, apply_phase_modifier, Phase, tier_index};
 use crate::state::{
-    AuditorState, Config, CurveState, Experiment, AUDITOR, CONFIG, CURVE, EXPERIMENT_COUNT,
-    EXPERIMENTS, LOOT_TABLE, PENDING_BONDS, CONTRACT_NAME, CONTRACT_VERSION,
+    AuditorState, BossState, Config, CurveState, Experiment, PlayerRewardClaim, Specimen,
+    ATTACK_COOLDOWN_SECS, AUDITOR, BOSS_STATE, CONFIG, CONSUMED_EXPERIMENTS, CURVE,
+    DEFAULT_BOSS_HP, EXPERIMENT_COUNT, EXPERIMENTS, LOOT_TABLE, PENDING_BONDS,
+    PLAYER_CLAIM_EPOCH, PLAYER_DAMAGE, SPECIMEN_COUNT, SPECIMENS, CONTRACT_NAME, CONTRACT_VERSION,
 };
 
 const MIN_BOND: u128 = 1_000;
@@ -83,6 +86,13 @@ pub fn execute(
             ibc_delta,
         } => execute_update_regime(deps, env, info, score, bonded_delta, gov_delta, ibc_delta),
         ExecuteMsg::RunAudit {} => execute_run_audit(deps, env, info),
+        // ─── Raid Boss handlers ───────────────────────────────────────────
+        ExecuteMsg::MergeSpecimen { experiment_ids } =>
+            execute_merge_specimen(deps, env, info, experiment_ids),
+        ExecuteMsg::AttackBoss { specimen_id } =>
+            execute_attack_boss(deps, env, info, specimen_id),
+        ExecuteMsg::ClaimReward {} => execute_claim_reward(deps, info),
+        ExecuteMsg::RespawnBoss { new_hp } => execute_respawn_boss(deps, env, info, new_hp),
     }
 }
 
@@ -304,4 +314,275 @@ fn total_staked(deps: Deps, addr: &cosmwasm_std::Addr) -> StdResult<Uint128> {
         .iter()
         .map(|d| d.amount.amount)
         .fold(Uint128::zero(), |acc, v| acc + v))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Raid Boss milestone execute handlers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Initialise BossState on first access (lazy init avoids requiring a separate
+/// admin call after deployment).
+fn ensure_boss_state(deps: &mut DepsMut) -> Result<BossState, ContractError> {
+    if let Some(boss) = BOSS_STATE.may_load(deps.storage)? {
+        return Ok(boss);
+    }
+    let boss = BossState {
+        max_hp: DEFAULT_BOSS_HP,
+        current_hp: DEFAULT_BOSS_HP,
+        defeated: false,
+        respawn_count: 0,
+    };
+    BOSS_STATE.save(deps.storage, &boss)?;
+    Ok(boss)
+}
+
+/// Execute: MergeSpecimen — consume 4 Experiments, mint one Specimen.
+fn execute_merge_specimen(
+    mut deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    experiment_ids: [u64; 4],
+) -> Result<Response, ContractError> {
+    // 1. Reject duplicate IDs
+    {
+        let mut seen = std::collections::HashSet::new();
+        for id in &experiment_ids {
+            if !seen.insert(*id) {
+                return Err(ContractError::InvalidMergeInput {});
+            }
+        }
+    }
+
+    // 2. Validate ownership + not-already-consumed for each Experiment
+    let mut tier_indices = [0u8; 4];
+    let mut dominant_tier = "COMMON".to_string();
+    let mut dominant_power = 0u8;
+
+    for (slot, &exp_id) in experiment_ids.iter().enumerate() {
+        // Consumed check
+        if CONSUMED_EXPERIMENTS.may_load(deps.storage, exp_id)?.is_some() {
+            return Err(ContractError::ExperimentAlreadyConsumed { id: exp_id });
+        }
+        // Ownership check
+        let exp = EXPERIMENTS
+            .may_load(deps.storage, exp_id)?
+            .ok_or(ContractError::NotExperimentOwner { id: exp_id })?;
+        if exp.player != info.sender {
+            return Err(ContractError::NotExperimentOwner { id: exp_id });
+        }
+        let idx = tier_index(&exp.outcome_tier);
+        tier_indices[slot] = idx;
+        // Track dominant (highest-index) tier for art
+        if idx > dominant_power {
+            dominant_power = idx;
+            dominant_tier = exp.outcome_tier.clone();
+        }
+    }
+
+    // 3. Mark all 4 as consumed
+    for &exp_id in &experiment_ids {
+        CONSUMED_EXPERIMENTS.save(deps.storage, exp_id, &true)?;
+    }
+
+    // 4. Compute archetype + power
+    let archetype = compute_archetype(tier_indices);
+    let power = compute_power(tier_indices, archetype);
+
+    // 5. Mint Specimen
+    let mut count = SPECIMEN_COUNT.may_load(deps.storage)?.unwrap_or(0);
+    count += 1;
+    SPECIMEN_COUNT.save(deps.storage, &count)?;
+
+    let specimen = Specimen {
+        id: count,
+        owner: info.sender.clone(),
+        archetype: archetype.as_str().to_string(),
+        tier: dominant_tier.clone(),
+        power,
+        consumed_experiment_ids: experiment_ids,
+        last_attack_at: None,
+        created_at: env.block.time,
+    };
+    SPECIMENS.save(deps.storage, count, &specimen)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "merge_specimen")
+        .add_attribute("specimen_id", count.to_string())
+        .add_attribute("archetype", archetype.as_str())
+        .add_attribute("tier", dominant_tier)
+        .add_attribute("power", power.to_string())
+        .add_attribute("player", info.sender))
+}
+
+/// Execute: AttackBoss — deal damage with a Specimen, respecting cooldown.
+fn execute_attack_boss(
+    mut deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    specimen_id: u64,
+) -> Result<Response, ContractError> {
+    // 1. Load + validate Specimen ownership
+    let mut specimen = SPECIMENS
+        .may_load(deps.storage, specimen_id)?
+        .ok_or(ContractError::NotSpecimenOwner {})?;
+    if specimen.owner != info.sender {
+        return Err(ContractError::NotSpecimenOwner {});
+    }
+
+    // 2. Check cooldown
+    if let Some(last) = specimen.last_attack_at {
+        let elapsed = env.block.time.seconds().saturating_sub(last.seconds());
+        if elapsed < ATTACK_COOLDOWN_SECS {
+            return Err(ContractError::SpecimenOnCooldown {});
+        }
+    }
+
+    // 3. Load Boss state (lazy init)
+    let mut boss = ensure_boss_state(&mut deps)?;
+    if boss.defeated {
+        return Err(ContractError::BossAlreadyDefeated {});
+    }
+
+    // 4. Compute damage using current regime score
+    let loot = LOOT_TABLE.load(deps.storage)?;
+    let phase = Phase::from_score(loot.regime_score);
+    let damage = apply_phase_modifier(specimen.power, {
+        // Parse archetype back from string
+        match specimen.archetype.as_str() {
+            "Pure" => crate::specimen::Archetype::Pure,
+            "Balanced" => crate::specimen::Archetype::Balanced,
+            _ => crate::specimen::Archetype::Hybrid,
+        }
+    }, phase);
+
+    // 5. Apply damage to Boss
+    boss.current_hp = boss.current_hp.saturating_sub(damage);
+    let defeated = boss.current_hp == 0;
+    boss.defeated = defeated;
+    BOSS_STATE.save(deps.storage, &boss)?;
+
+    // 6. Update specimen cooldown
+    specimen.last_attack_at = Some(env.block.time);
+    SPECIMENS.save(deps.storage, specimen_id, &specimen)?;
+
+    // 7. Update player damage ledger
+    let cooldown_until = env.block.time.seconds() + ATTACK_COOLDOWN_SECS;
+    let epoch = boss.respawn_count;
+    let player_epoch = PLAYER_CLAIM_EPOCH
+        .may_load(deps.storage, &info.sender)?
+        .unwrap_or(0);
+
+    // Reset ledger entry if this is a new Boss life
+    let existing = if player_epoch == epoch {
+        PLAYER_DAMAGE.may_load(deps.storage, &info.sender)?.unwrap_or(PlayerRewardClaim {
+            damage_dealt: 0,
+            claimed: false,
+            reward_credits: 0,
+        })
+    } else {
+        PLAYER_CLAIM_EPOCH.save(deps.storage, &info.sender, &epoch)?;
+        PlayerRewardClaim { damage_dealt: 0, claimed: false, reward_credits: 0 }
+    };
+
+    let updated = PlayerRewardClaim {
+        damage_dealt: existing.damage_dealt + damage,
+        claimed: false,
+        reward_credits: 0, // computed at claim time
+    };
+    PLAYER_DAMAGE.save(deps.storage, &info.sender, &updated)?;
+
+    let mut resp = Response::new()
+        .add_attribute("action", "attack_boss")
+        .add_attribute("player", info.sender)
+        .add_attribute("specimen_id", specimen_id.to_string())
+        .add_attribute("damage", damage.to_string())
+        .add_attribute("boss_hp", boss.current_hp.to_string())
+        .add_attribute("cooldown_until", cooldown_until.to_string());
+
+    if defeated {
+        resp = resp.add_attribute("boss_defeated", "true");
+    }
+
+    Ok(resp)
+}
+
+/// Execute: ClaimReward — collect reward credits proportional to damage share.
+fn execute_claim_reward(
+    deps: DepsMut,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let boss = BOSS_STATE
+        .may_load(deps.storage)?
+        .unwrap_or(BossState { max_hp: 0, current_hp: 0, defeated: false, respawn_count: 0 });
+
+    if !boss.defeated {
+        return Err(ContractError::BossStillAlive {});
+    }
+
+    // Validate player is in the current epoch
+    let epoch = boss.respawn_count;
+    let player_epoch = PLAYER_CLAIM_EPOCH
+        .may_load(deps.storage, &info.sender)?
+        .unwrap_or(u64::MAX);
+    if player_epoch != epoch {
+        return Err(ContractError::NoDamageContribution {});
+    }
+
+    let mut claim = PLAYER_DAMAGE
+        .may_load(deps.storage, &info.sender)?
+        .ok_or(ContractError::NoDamageContribution {})?;
+
+    if claim.claimed {
+        return Err(ContractError::RewardAlreadyClaimed {});
+    }
+    if claim.damage_dealt == 0 {
+        return Err(ContractError::NoDamageContribution {});
+    }
+
+    // Compute total damage dealt in this Boss life across all players
+    // (we sum over PLAYER_DAMAGE for players in the current epoch)
+    // Simple approach: award credits = damage_dealt (1:1 credits per damage point)
+    // Frontend can display share% relative to total leaderboard damage.
+    let reward_credits = claim.damage_dealt as u64;
+
+    claim.claimed = true;
+    claim.reward_credits = reward_credits;
+    PLAYER_DAMAGE.save(deps.storage, &info.sender, &claim)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "claim_reward")
+        .add_attribute("player", info.sender)
+        .add_attribute("reward_credits", reward_credits.to_string())
+        .add_attribute("damage_dealt", claim.damage_dealt.to_string()))
+}
+
+/// Execute: RespawnBoss — relayer/owner only.
+fn execute_respawn_boss(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    new_hp: u32,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if info.sender != config.relayer && info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let current = BOSS_STATE
+        .may_load(deps.storage)?
+        .unwrap_or(BossState { max_hp: 0, current_hp: 0, defeated: true, respawn_count: 0 });
+
+    let hp = if new_hp == 0 { DEFAULT_BOSS_HP } else { new_hp };
+    let boss = BossState {
+        max_hp: hp,
+        current_hp: hp,
+        defeated: false,
+        respawn_count: current.respawn_count + 1,
+    };
+    BOSS_STATE.save(deps.storage, &boss)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "respawn_boss")
+        .add_attribute("new_hp", hp.to_string())
+        .add_attribute("respawn_count", boss.respawn_count.to_string()))
 }

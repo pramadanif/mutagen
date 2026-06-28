@@ -1,1 +1,1 @@
-1c40ffffee0794943021e2bf8913dada65da810088f53dc91c551e6eb83d040e  mutagen_contract.wasm
+a42abfaa187d743db12ae20a0a9b917ed3612e55a9f274a92a294cffcc1cb32c  mutagen_contract.wasm

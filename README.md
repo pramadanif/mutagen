@@ -6,7 +6,7 @@ Built for the **Mad Easy on Cosmos** builder sprint (Mad Scientists × Cosmos La
 
 | | |
 |---|---|
-| **Live demo** | Run locally — see [Quick start](#quick-start) |
+| **Live demo** | [deployment.md](./deployment.md) — Vercel + `https://mutagen.pramadani.site` |
 | **Chain** | Cosmos ICS Provider testnet (`provider`) |
 | **Contract** | `cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g` |
 | **Architecture diagrams** | [mermaid.md](./mermaid.md) |
@@ -248,7 +248,7 @@ cp relayer/.env.example relayer/.env
 ### 3. Start services (two terminals)
 
 ```bash
-# Terminal 1 — Relayer (port 3001)
+# Terminal 1 — Relayer (port 3091)
 npm run relayer:dev
 
 # Terminal 2 — Frontend (port 3000)
@@ -278,7 +278,7 @@ npm run build                    # Production build check
 NEXT_PUBLIC_RPC_URL=https://rpc.provider-sentry-02.ics-testnet.polypore.xyz
 NEXT_PUBLIC_REST_URL=https://rest.provider-sentry-02.ics-testnet.polypore.xyz
 NEXT_PUBLIC_CONTRACT_ADDRESS=cosmos1cegnz6mmj94vwtvyhm3ev44cqrsh3ft44rf28d08hdd9eft6t2kqsldh3g
-NEXT_PUBLIC_RELAYER_URL=http://localhost:3001
+NEXT_PUBLIC_RELAYER_URL=http://localhost:3091
 ```
 
 | Variable | Description |
@@ -291,7 +291,7 @@ NEXT_PUBLIC_RELAYER_URL=http://localhost:3001
 ### Relayer (`relayer/.env`)
 
 ```env
-PORT=3001
+PORT=3091
 RPC_URL=https://rpc.provider-sentry-02.ics-testnet.polypore.xyz
 REST_URL=https://rest.cosmos.directory/cosmoshub
 INTERVAL_MS=300000
@@ -355,7 +355,7 @@ npm run relayer:verify # Verification suite
 
 ### What the relayer does on startup
 
-1. Starts Express on `PORT` (default **3001**).
+1. Starts Express on `PORT` (default **3091**).
 2. Runs an immediate oracle cycle.
 3. Schedules recurring cycles every `INTERVAL_MS`.
 
@@ -435,7 +435,7 @@ Draw uses a **deterministic seed** from block height, time, pull count, and play
 
 ## Relayer HTTP API
 
-Base URL: `http://localhost:3001` (configurable)
+Base URL: `http://localhost:3091` (local) · `https://mutagen.pramadani.site` (production)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -448,13 +448,13 @@ Base URL: `http://localhost:3001` (configurable)
 ### Example: health check
 
 ```bash
-curl http://localhost:3001/health | jq
+curl http://localhost:3091/health | jq
 ```
 
 ### Example: record experiment
 
 ```bash
-curl -X POST http://localhost:3001/api/experiments \
+curl -X POST http://localhost:3091/api/experiments \
   -H "Content-Type: application/json" \
   -d '{"bondAmount":0.1,"payout":0.25,"tier":"RARE","timestamp":"2026-06-22T12:00:00Z"}'
 ```
@@ -604,8 +604,8 @@ Both are: infrequent relative to user actions, threshold-triggered, logged with 
 
 ### Hub Pulse stuck at zero
 
-- Confirm relayer is running on port 3001.
-- Set `NEXT_PUBLIC_RELAYER_URL=http://localhost:3001`.
+- Confirm relayer is running on port 3091.
+- Set `NEXT_PUBLIC_RELAYER_URL=http://localhost:3091` (local) or `https://mutagen.pramadani.site` (production).
 - Wait one oracle cycle (`INTERVAL_MS`) after startup.
 
 ### Contract query errors
@@ -623,6 +623,7 @@ This project was built for the Mad Easy on Cosmos hackathon. See repository for 
 
 ## Further reading
 
+- [deployment.md](./deployment.md) — Production deploy (Vercel + VPS `mutagen.pramadani.site`)
 - [mermaid.md](./mermaid.md) — Full architecture diagrams
 - [context.md](./context.md) — Hackathon context, judge personas, product spec
 - [prompt.md](./prompt.md) — Complete build specification used for agent-driven development
@@ -631,3 +632,77 @@ This project was built for the Mad Easy on Cosmos hackathon. See repository for 
 ---
 
 **MUTAGEN** — *Everything is an experiment.*
+
+---
+
+## Roadmap / Next Milestone — Raid Boss
+
+> **⚠️ POST-SUBMISSION WORK — NOT PART OF THE JUDGED ENTRY**
+>
+> The following feature was designed and built **after** the Mad Easy on Cosmos submission deadline (22 Jun 2026 17:00 UTC). It lives entirely on the `feature/raid-boss` branch and has **never been merged** into the `main` branch that was submitted for judging.
+>
+> Built: **25 Jun 2026** · Branch: `feature/raid-boss`
+
+### What was built
+
+The Raid Boss milestone adds a cooperative social-coordination layer on top of the existing MUTAGEN core loop, directly addressing the "social coordination games" angle in the hackathon brief.
+
+#### 1. Merge Lab (`/merge`)
+
+- Players select exactly 4 owned Mutation NFTs (Experiments) and merge them into a **Specimen**.
+- Archetype is determined by tier composition:
+  - **Pure** — 4 of the same tier: high raw power, phase-sensitive
+  - **Balanced** — 2+2 matching pairs: moderate power, phase-neutral
+  - **Hybrid** — all 4 different tiers: lowest raw power, fully phase-immune
+- Live preview shows computed Archetype and Power before confirming.
+- Phase modifier cheat-sheet displayed inline.
+
+#### 2. Raid Boss (`/raid`)
+
+- One shared on-chain Boss with a public HP pool.
+- `AttackBoss` message computes damage via the Power × Archetype × Phase formula.
+- Per-Specimen 5-minute attack cooldown (configurable) — prevents solo spam.
+- On Boss defeat: `BossDefeated` event, per-player damage ledger, `ClaimReward` proportional to contribution share.
+- `RespawnBoss` (relayer/owner only) resets the Boss for the next round.
+
+#### 3. Power / Archetype / Phase formula
+
+Implemented in `mutagen-contract/src/specimen.rs` with **25 passing unit tests** covering every archetype × phase combination:
+
+| Phase | Pure | Balanced | Hybrid |
+|-------|------|----------|--------|
+| CALM (0–30) | −30% | 0% | 0% |
+| ELEVATED (31–60) | 0% | 0% | 0% |
+| TURBULENT (61–100) | +30% | 0% | 0% |
+
+Net design effect: optimal Specimen depends on which regime is active — tying the new mechanic directly into the Hub-data-driven system at MUTAGEN's core.
+
+#### 4. Pixel art sprites
+
+All original pixel art, brand-palette (`#F2F2F2` / `#000000` / `#39FF14` / `#FFBD2E` / `#FF5F56`), no blur:
+
+- **Specimen sprites:** Pure (crystalline spikes), Balanced (dual-blade), Hybrid (asymmetric blob) — each with idle + attack frames.
+- **Boss sprites (3 phase variants):** Stone Golem Construct with CALM (green sigils), ELEVATED (gold aura), and TURBULENT (red lightning) variants — each with idle, hit-reaction, and defeat animations.
+
+No third-party art assets used. All sprites are original works generated for this project.
+
+#### 5. New pages & components
+
+| Route | Component |
+|-------|-----------|
+| `/merge` | `MergePage` — NFT gallery, 4-slot selection, live preview |
+| `/raid` | `RaidPage` — live HP bar, phase-variant Boss, cooldown timer, leaderboard, defeat modal |
+
+New UI components: `PixelSprite` (canvas animator), `BossHpBar` (segmented pixel bar), `DamageNumber` (floating feedback).
+
+New sound effects in `src/lib/raid-sounds.ts`: attack hit, boss reaction, defeat fanfare, merge complete — all using the existing Web Audio engine.
+
+### What's next (beyond this milestone)
+
+- Full testnet deployment with a new contract address.
+- Multi-player coordination testing with multiple wallets.
+- Boss respawn scheduling via the relayer oracle.
+- Boss difficulty scaling on respawn.
+
+---
+

@@ -4,12 +4,14 @@ use cosmwasm_std::{Addr, Deps, Env, Order, QueryRequest, StakingQuery, StdResult
 use cw_storage_plus::Bound;
 
 use crate::msg::{
-    ConfigResponse, InterventionLogResponse, ListExperimentsResponse, QueryMsg,
-    ResonanceBonusResponse,
+    BossStateResponse, ConfigResponse, InterventionLogResponse, LeaderboardEntry,
+    LeaderboardResponse, ListExperimentsResponse, QueryMsg, ResonanceBonusResponse,
+    SpecimensResponse,
 };
 use crate::state::{
-    AuditorState, Config, CurveState, Experiment, LootTableState, AUDITOR, CONFIG, CURVE,
-    EXPERIMENTS, LOOT_TABLE,
+    AuditorState, BossState, Config, Experiment, Specimen,
+    AUDITOR, BOSS_STATE, CONFIG, CURVE, EXPERIMENTS, LOOT_TABLE, PLAYER_CLAIM_EPOCH,
+    PLAYER_DAMAGE, SPECIMEN_COUNT, SPECIMENS,
 };
 
 const DEFAULT_LIMIT: u32 = 20;
@@ -39,6 +41,15 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<cosmwasm_std::Bi
         }
         QueryMsg::GetInterventionLog { limit } => {
             cosmwasm_std::to_json_binary(&query_interventions(deps, limit)?)
+        }
+        // ─── Raid Boss queries ──────────────────────────────────────────────────
+        QueryMsg::GetBossState {} => cosmwasm_std::to_json_binary(&query_boss_state(deps)?),
+        QueryMsg::GetLeaderboard {} => cosmwasm_std::to_json_binary(&query_leaderboard(deps)?),
+        QueryMsg::GetPlayerSpecimens { player } => {
+            cosmwasm_std::to_json_binary(&query_player_specimens(deps, player)?)
+        }
+        QueryMsg::GetSpecimen { id } => {
+            cosmwasm_std::to_json_binary(&SPECIMENS.load(deps.storage, id)?)
         }
     }
 }
@@ -115,4 +126,101 @@ fn query_interventions(deps: Deps, limit: Option<u32>) -> StdResult<Intervention
     let start = auditor.intervention_log.len().saturating_sub(take);
     let interventions = auditor.intervention_log[start..].to_vec();
     Ok(InterventionLogResponse { interventions })
+}
+
+// ─── Raid Boss query handlers ─────────────────────────────────────────────────
+
+fn query_boss_state(deps: Deps) -> StdResult<BossStateResponse> {
+    let boss = BOSS_STATE.may_load(deps.storage)?.unwrap_or(BossState {
+        max_hp: crate::state::DEFAULT_BOSS_HP,
+        current_hp: crate::state::DEFAULT_BOSS_HP,
+        defeated: false,
+        respawn_count: 0,
+    });
+    let hp_percent = if boss.max_hp == 0 {
+        0
+    } else {
+        (boss.current_hp as u64 * 100 / boss.max_hp as u64) as u32
+    };
+    Ok(BossStateResponse {
+        max_hp: boss.max_hp,
+        current_hp: boss.current_hp,
+        defeated: boss.defeated,
+        respawn_count: boss.respawn_count,
+        hp_percent,
+    })
+}
+
+fn query_leaderboard(deps: Deps) -> StdResult<LeaderboardResponse> {
+    let boss = BOSS_STATE.may_load(deps.storage)?.unwrap_or(BossState {
+        max_hp: 0,
+        current_hp: 0,
+        defeated: false,
+        respawn_count: 0,
+    });
+    let epoch = boss.respawn_count;
+
+    // Collect all player damage records for the current Boss life
+    let mut entries_raw: Vec<(Addr, u32, bool, u64)> = PLAYER_DAMAGE
+        .range(deps.storage, None, None, Order::Ascending)
+        .filter_map(|item| {
+            item.ok().and_then(|(addr, claim)| {
+                // Only include players whose epoch matches the current boss life
+                let player_epoch = PLAYER_CLAIM_EPOCH
+                    .may_load(deps.storage, &addr)
+                    .unwrap_or(None)
+                    .unwrap_or(0);
+                if player_epoch != epoch {
+                    return None;
+                }
+                Some((addr, claim.damage_dealt, claim.claimed, claim.reward_credits))
+            })
+        })
+        .collect();
+
+    // Sort by damage descending
+    entries_raw.sort_by(|a, b| b.1.cmp(&a.1));
+
+    let total_damage: u32 = entries_raw.iter().map(|e| e.1).sum();
+
+    let entries: Vec<LeaderboardEntry> = entries_raw
+        .into_iter()
+        .take(50)
+        .map(|(addr, damage, claimed, credits)| {
+            let share_bps = if total_damage == 0 {
+                0
+            } else {
+                (damage as u64 * 10_000 / total_damage as u64) as u32
+            };
+            LeaderboardEntry {
+                player: addr,
+                damage,
+                share_bps,
+                reward_credits: credits,
+                claimed,
+            }
+        })
+        .collect();
+
+    Ok(LeaderboardResponse {
+        entries,
+        total_damage,
+        boss_defeated: boss.defeated,
+        respawn_count: epoch,
+    })
+}
+
+fn query_player_specimens(deps: Deps, player: String) -> StdResult<SpecimensResponse> {
+    let addr = deps.api.addr_validate(&player)?;
+    let count = SPECIMEN_COUNT.may_load(deps.storage)?.unwrap_or(0);
+    let specimens: Vec<Specimen> = (1..=count)
+        .filter_map(|id| {
+            SPECIMENS
+                .may_load(deps.storage, id)
+                .ok()
+                .flatten()
+                .and_then(|s| if s.owner == addr { Some(s) } else { None })
+        })
+        .collect();
+    Ok(SpecimensResponse { specimens })
 }

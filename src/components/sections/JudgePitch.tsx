@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PITCH, CORE_PILLARS } from "@/lib/judge-content";
 import { PixelMarquee } from "@/components/ui/PixelMarquee";
 import { MutationTierShowcase } from "@/components/ui/MutationTierShowcase";
+import { PixelSprite } from "@/components/ui/PixelSprite";
 
 const MARQUEE_PILLARS = CORE_PILLARS.map((p) => p.label.toUpperCase());
 
@@ -14,16 +15,22 @@ const CTAS = [
       "bg-mutagen-green text-black hover:bg-[#5cff42]",
   },
   {
+    href: "/merge",
+    label: "MERGE LAB",
+    desc: "Synthesize 4 Mutations",
+    className: "bg-[#8B5CF6] text-white hover:bg-[#a78bfa]",
+  },
+  {
+    href: "/raid",
+    label: "RAID BOSS",
+    desc: "Cooperative combat",
+    className: "bg-mutagen-red text-white hover:bg-red-400 animate-pulse",
+  },
+  {
     href: "/how-it-works",
     label: "HOW IT WORKS",
     desc: "Full mechanic breakdown",
     className: "bg-white text-black hover:bg-[#f8f8f8]",
-  },
-  {
-    href: "/dashboard",
-    label: "OPEN DASHBOARD",
-    desc: "Histogram · gauge · Hub Pulse",
-    className: "bg-black text-mutagen-green hover:bg-[#1a1a1a]",
   },
 ] as const;
 
@@ -147,24 +154,53 @@ export function PitchOverview() {
               <div className="bg-black text-mutagen-green text-center py-2 font-header text-[0.5rem] tracking-[0.2em] border-b-4 border-black">
                 START YOUR EXPERIMENT
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 divide-y-4 md:divide-y-0 md:divide-x-4 divide-black">
+              <div className="grid grid-cols-1 lg:grid-cols-4 divide-y-4 lg:divide-y-0 lg:divide-x-4 divide-black">
                 {CTAS.map((cta) => (
                   <Link
-                    key={cta.href}
-                    href={cta.href}
-                    className={`group flex flex-col items-center justify-center gap-1 px-6 py-6 border-black transition-all hover:translate-y-[-2px] ${cta.className}`}
-                  >
-                    <span className="font-header text-[0.65rem] group-hover:tracking-wider transition-all">
-                      {cta.label} →
-                    </span>
-                    <span className="text-xs font-bold opacity-60">{cta.desc}</span>
-                  </Link>
-                ))}
+                     key={cta.href}
+                     href={cta.href}
+                     className={`group flex flex-col items-center justify-center gap-1 px-6 py-6 border-black transition-all hover:translate-y-[-2px] ${cta.className}`}
+                   >
+                     <span className="font-header text-[0.65rem] group-hover:tracking-wider transition-all">
+                       {cta.label} →
+                     </span>
+                     <span className="text-xs font-bold opacity-60">{cta.desc}</span>
+                   </Link>
+                 ))}
+               </div>
+             </div>
+
+            {/* Raid Boss Explanation */}
+            <div className="border-t-4 border-black bg-white p-6 md:p-8">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-1">
+                  <h3 className="font-header text-xl md:text-2xl text-mutagen-red mb-3">DYNAMIC RAID BOSS</h3>
+                  <p className="text-sm leading-relaxed text-black/80 mb-4">
+                    The appearance and behavior of The Construct (the global Raid Boss) shifts dynamically based on the Cosmos Hub's volatility (Regime Score).
+                  </p>
+                  <ul className="text-sm space-y-2 font-bold">
+                    <li className="flex items-center gap-2"><span className="w-3 h-3 bg-[#39FF14] inline-block border border-black"></span> CALM PHASE: Low volatility. Boss is idle.</li>
+                    <li className="flex items-center gap-2"><span className="w-3 h-3 bg-[#F59E0B] inline-block border border-black"></span> ELEVATED PHASE: Medium volatility. Boss is active.</li>
+                    <li className="flex items-center gap-2"><span className="w-3 h-3 bg-[#FF5F56] inline-block border border-black"></span> TURBULENT PHASE: High volatility. Boss is enraged.</li>
+                  </ul>
+                </div>
+                <div className="shrink-0 w-40 h-40 relative">
+                  <PixelSprite
+                    src="/sprites/boss-calm-idle.png"
+                    frameW={341}
+                    frameH={550}
+                    offsetY={0}
+                    totalFrames={3}
+                    fps={3}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+
+           </div>
+         </div>
+       </div>
     </section>
   );
 }

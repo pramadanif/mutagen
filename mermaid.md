@@ -313,7 +313,7 @@ gantt
 flowchart LR
     Dev["Developer machine"]
     Dev -->|"npm run dev :3000"| FE["Next.js"]
-    Dev -->|"npm run relayer:dev :3001"| RL["Relayer"]
+    Dev -->|"npm run relayer:dev :3091"| RL["Relayer"]
 
     RL -->|"RPC + REST"| NET["provider testnet"]
     FE -->|"CosmJS queries"| NET

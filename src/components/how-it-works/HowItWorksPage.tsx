@@ -13,6 +13,7 @@ import {
   CORE_PILLARS,
 } from "@/lib/judge-content";
 import { InfoPanel, InnerCard } from "@/components/ui/InfoPanel";
+import { PixelSprite } from "@/components/ui/PixelSprite";
 
 function AiFlowDiagram() {
   return (
@@ -107,6 +108,46 @@ export function HowItWorksPage() {
           >
             RUN A PULL IN THE LAB →
           </Link>
+        </div>
+      </InfoPanel>
+
+      {/* Synthesis & Raid */}
+      <InfoPanel title="The Synthesis & Raid Loop" subtitle="Merge → Deploy → Defeat">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="text-center p-6 border-4 border-black bg-white flex flex-col items-center h-full">
+            <div className="h-40 w-full flex items-center justify-center mb-4 shrink-0">
+              <Image
+                src="/specimen_v2.png"
+                alt="Merge Mutations"
+                width={120}
+                height={120}
+                className="[image-rendering:pixelated] object-contain"
+              />
+            </div>
+            <div className="font-header text-xs mb-2">1. MERGE SPECIMEN</div>
+            <p className="text-sm leading-snug mb-6">Sacrifice 4 Mutation NFTs to synthesize a powerful Specimen. The archetype is determined by the traits of the sacrificed NFTs.</p>
+            <Link href="/merge" className="mt-auto inline-block bg-[#8B5CF6] text-white border-4 border-black px-4 py-2 font-header text-[0.6rem] shadow-[4px_4px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-all">
+              ENTER MERGE LAB →
+            </Link>
+          </div>
+          <div className="text-center p-6 border-4 border-black bg-white flex flex-col items-center h-full">
+            <div className="h-40 w-full flex items-center justify-center mb-4 relative shrink-0">
+              <PixelSprite
+                src="/sprites/boss-calm-idle.png"
+                frameW={341}
+                frameH={550}
+                offsetY={0}
+                totalFrames={3}
+                fps={3}
+                style={{ height: "100%", width: "auto", objectFit: "contain" }}
+              />
+            </div>
+            <div className="font-header text-xs mb-2">2. FIGHT RAID BOSS</div>
+            <p className="text-sm leading-snug mb-6">Deploy your Specimen to deal damage to a global, server-wide Raid Boss. Earn reward credits based on your damage contribution.</p>
+            <Link href="/raid" className="mt-auto inline-block bg-mutagen-red text-white border-4 border-black px-4 py-2 font-header text-[0.6rem] shadow-[4px_4px_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#000] transition-all animate-pulse">
+              FIGHT RAID BOSS →
+            </Link>
+          </div>
         </div>
       </InfoPanel>
 
