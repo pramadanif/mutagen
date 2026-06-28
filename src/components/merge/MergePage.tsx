@@ -8,6 +8,8 @@ import { CHAIN_NAME } from "@/lib/cosmoshub-testnet-chain";
 import {
   mapOnChainExperiment,
   queryPlayerExperiments,
+  queryPlayerSpecimens,
+  collectConsumedExperimentIds,
   getSigningClient,
   mergeSpecimen,
   computeSpecimenPreview,
@@ -105,6 +107,7 @@ export function MergePage() {
   };
 
   const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [consumedIds, setConsumedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<(Experiment | null)[]>([null, null, null, null]);
   const [merging, setMerging] = useState(false);
@@ -112,21 +115,43 @@ export function MergePage() {
   const [success, setSuccess] = useState<{ specimenId: number; archetype: string; power: number } | null>(null);
   const [txHash, setTxHash] = useState("");
 
-  // Load player mutations
+  const loadMergeableExperiments = useCallback(async (wallet: string) => {
+    const [exps, specimens] = await Promise.all([
+      queryPlayerExperiments(wallet),
+      queryPlayerSpecimens(wallet),
+    ]);
+    const consumed = collectConsumedExperimentIds(specimens);
+    setExperiments(exps.map(mapOnChainExperiment));
+    setConsumedIds(consumed);
+    setSelected((prev) =>
+      prev.map((slot) => (slot && consumed.has(slot.id) ? null : slot))
+    );
+  }, []);
+
+  // Load player mutations (exclude already-merged)
   useEffect(() => {
-    if (!isWalletConnected || !address) { setExperiments([]); return; }
+    if (!isWalletConnected || !address) {
+      setExperiments([]);
+      setConsumedIds(new Set());
+      return;
+    }
     setLoading(true);
-    queryPlayerExperiments(address)
-      .then((exps) => setExperiments(exps.map(mapOnChainExperiment)))
-      .catch(() => setExperiments([]))
+    loadMergeableExperiments(address)
+      .catch(() => {
+        setExperiments([]);
+        setConsumedIds(new Set());
+      })
       .finally(() => setLoading(false));
-  }, [address, isWalletConnected]);
+  }, [address, isWalletConnected, loadMergeableExperiments]);
 
   // IDs already in selection slots
   const selectedIds = new Set(selected.filter(Boolean).map((e) => e!.id));
 
+  const mergeableExperiments = experiments.filter((e) => !consumedIds.has(e.id));
+
   const handleCardClick = useCallback((exp: Experiment) => {
-    if (selectedIds.has(exp.id)) return; // already selected, remove via slot
+    if (consumedIds.has(exp.id)) return;
+    if (selectedIds.has(exp.id)) return;
     const firstEmpty = selected.findIndex((s) => s === null);
     if (firstEmpty === -1) return; // all 4 filled
     setSelected((prev) => {
@@ -134,7 +159,7 @@ export function MergePage() {
       next[firstEmpty] = exp;
       return next;
     });
-  }, [selected, selectedIds]);
+  }, [selected, selectedIds, consumedIds]);
 
   const handleRemoveSlot = (i: number) => {
     setSelected((prev) => { const next = [...prev]; next[i] = null; return next; });
@@ -160,10 +185,7 @@ export function MergePage() {
       playMergeCompleteSound();
       // Reset selection
       setSelected([null, null, null, null]);
-      // Refresh experiments
-      queryPlayerExperiments(address)
-        .then((exps) => setExperiments(exps.map(mapOnChainExperiment)))
-        .catch(() => {});
+      await loadMergeableExperiments(address);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Merge failed.");
     } finally {
@@ -212,11 +234,15 @@ export function MergePage() {
                 <p className="text-center opacity-60 py-8">Connect wallet to see your mutations.</p>
               ) : loading ? (
                 <p className="text-center opacity-60 py-8 animate-pulse">Loading mutations…</p>
-              ) : experiments.length === 0 ? (
-                <p className="text-center opacity-60 py-8">No mutations yet. Visit The Lab first.</p>
+              ) : mergeableExperiments.length === 0 ? (
+                <p className="text-center opacity-60 py-8">
+                  {experiments.length > 0
+                    ? "All mutations already merged into Specimens."
+                    : "No mutations yet. Visit The Lab first."}
+                </p>
               ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {[...experiments].reverse().map((exp) => {
+                  {[...mergeableExperiments].reverse().map((exp) => {
                     const colors = TIER_COLORS[exp.tier];
                     const isSelected = selectedIds.has(exp.id);
                     const isFull = selected.every(Boolean);

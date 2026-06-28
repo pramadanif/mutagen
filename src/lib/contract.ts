@@ -237,6 +237,17 @@ export async function queryPlayerSpecimens(player: string): Promise<Specimen[]> 
   return res.specimens ?? [];
 }
 
+/** Experiment IDs already burned via merge — derived from player's Specimens. */
+export function collectConsumedExperimentIds(specimens: Specimen[]): Set<number> {
+  const ids = new Set<number>();
+  for (const s of specimens) {
+    for (const id of s.consumed_experiment_ids) {
+      ids.add(id);
+    }
+  }
+  return ids;
+}
+
 export async function querySpecimen(id: number): Promise<Specimen> {
   const client = await getReadClient();
   return client.queryContractSmart(CONTRACT_ADDRESS, { get_specimen: { id } });
